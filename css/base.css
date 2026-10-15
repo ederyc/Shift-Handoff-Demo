@@ -49,15 +49,36 @@ svg { flex-shrink: 0; }
   border: 0;
 }
 
+/* Icons come in two sizes and one stroke weight. The sprite shapes use
+   non-scaling strokes, so --icon-stroke is the same on screen at both sizes. */
 .icon {
-  width: 1.125em;
-  height: 1.125em;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   fill: none;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: var(--icon-stroke);
   stroke-linecap: round;
   stroke-linejoin: round;
   vertical-align: -0.2em;
+}
+.icon--md { width: var(--icon-md); height: var(--icon-md); }
+
+/*
+  Overline: the one voice for every structural label (table headers, filter
+  legends, drawer sections, demo controls), so labels never compete with data.
+*/
+.overline,
+.roster-table thead th,
+.filters__group legend,
+.filters__label,
+.dsec h3,
+.demo-controls__title {
+  color: var(--color-ink-subtle);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
 }
 
 .muted { color: var(--color-ink-subtle); }
@@ -148,7 +169,7 @@ kbd {
 }
 .icon-btn:hover { background: var(--color-surface-hover); color: var(--color-ink); }
 .icon-btn:active { background: var(--color-surface-pressed); color: var(--color-ink); }
-.icon-btn .icon { width: 1.25rem; height: 1.25rem; }
+.icon-btn .icon { width: var(--icon-md); height: var(--icon-md); }
 
 /* ---------- App chrome ---------- */
 
@@ -192,7 +213,7 @@ kbd {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.brand__name { font-weight: var(--weight-semibold); font-size: var(--text-md); letter-spacing: -0.01em; }
+.brand__name { font-weight: var(--weight-semibold); font-size: var(--text-md); letter-spacing: var(--tracking-tight); }
 .brand__divider { width: 1px; height: 1.25rem; background: var(--color-border); }
 .brand__org { color: var(--color-ink-muted); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -252,35 +273,47 @@ kbd {
   margin-bottom: var(--space-6);
 }
 
-.eyebrow {
-  color: var(--color-ink-subtle);
+.shift-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  color: var(--color-ink-muted);
   font-size: var(--text-sm);
-  margin-bottom: var(--space-1);
+  font-weight: var(--weight-medium);
 }
+.shift-chip .icon { color: var(--color-accent); }
+.shift-chip__since { color: var(--color-ink-subtle); font-weight: var(--weight-regular); }
 
 .board-head__title {
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
-  letter-spacing: -0.015em;
+  letter-spacing: var(--tracking-display);
 }
 
-.census {
+/* Census: four numbers, read left to right, separated by hairlines rather than boxes. */
+.census { display: flex; flex-wrap: wrap; }
+.census__item {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-8);
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 0 var(--space-6);
+  border-left: 1px solid var(--color-border);
 }
-.census__item { display: flex; flex-direction: column-reverse; }
+.census__item:first-child { padding-left: 0; border-left: 0; }
+.census__item:last-child { padding-right: 0; }
 .census dt { font-size: var(--text-xs); color: var(--color-ink-subtle); }
 .census dd {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-lg);
+  gap: 6px;
+  font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
 }
-.census dd .icon { display: none; width: 1.1rem; height: 1.1rem; }
+.census dd .icon { display: none; width: var(--icon-md); height: var(--icon-md); }
 .census__item.is-alert dd { color: var(--color-alert); }
 .census__item.is-caution dd { color: var(--color-caution); }
 /* While the board loads, numbers become placeholders instead of showing stale values. */
@@ -322,9 +355,6 @@ kbd {
   display: block;
   padding: 0;
   margin-bottom: var(--space-2);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--color-ink-subtle);
 }
 .filters__sort { margin-left: auto; }
 
@@ -483,11 +513,7 @@ kbd {
   line-height: var(--leading-relaxed);
 }
 .demo-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
-.demo-controls__title {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  color: var(--color-ink-subtle);
-}
+
 .demo-controls__buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
 /* ---------- Small screens ---------- */
@@ -500,8 +526,10 @@ kbd {
 @media (max-width: 30rem) {
   .page { padding-top: var(--space-6); }
   .board-head { gap: var(--space-4); }
-  .census { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; width: 100%; gap: var(--space-2); }
+  .census { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+  .census__item { padding: 0 var(--space-3); }
   .census dt { font-size: var(--text-2xs); }
+  .census dd { font-size: var(--text-lg); }
   .controls { padding: var(--space-3); }
   .filters { gap: var(--space-3); }
   .chip__face { padding: 0 var(--space-3); gap: var(--space-1); }

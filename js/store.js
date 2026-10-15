@@ -112,12 +112,12 @@
     show how the UI flags a value that's off.
   */
   const VITALS = {
-    spo2: { label: "SpO₂", long: "Oxygen saturation", unit: "%", value: (v) => v.spo2, check: (v) => (v.spo2 < 93 ? "low" : null) },
-    hr: { label: "HR", long: "Heart rate", unit: "bpm", value: (v) => v.hr, check: (v) => (v.hr > 100 ? "high" : v.hr < 55 ? "low" : null) },
-    bp: { label: "BP", long: "Blood pressure", unit: "mmHg", value: (v) => `${v.sys}/${v.dia}`, check: (v) => (v.sys > 160 ? "high" : v.sys < 95 ? "low" : null) },
-    rr: { label: "RR", long: "Respiratory rate", unit: "/min", value: (v) => v.rr, check: (v) => (v.rr > 22 ? "high" : v.rr < 10 ? "low" : null) },
-    temp: { label: "Temp", long: "Temperature", unit: "°C", value: (v) => v.temp.toFixed(1), check: (v) => (v.temp >= 38 ? "high" : v.temp < 35.5 ? "low" : null) },
-    pain: { label: "Pain", long: "Pain score", unit: "/10", value: (v) => v.pain, check: (v) => (v.pain >= 7 ? "high" : null) },
+    spo2: { icon: "o2", label: "SpO₂", long: "Oxygen saturation", unit: "%", value: (v) => v.spo2, check: (v) => (v.spo2 < 93 ? "low" : null) },
+    hr: { icon: "heart", label: "HR", long: "Heart rate", unit: "bpm", value: (v) => v.hr, check: (v) => (v.hr > 100 ? "high" : v.hr < 55 ? "low" : null) },
+    bp: { icon: "gauge", label: "BP", long: "Blood pressure", unit: "mmHg", value: (v) => `${v.sys}/${v.dia}`, check: (v) => (v.sys > 160 ? "high" : v.sys < 95 ? "low" : null) },
+    rr: { icon: "wind", label: "RR", long: "Respiratory rate", unit: "/min", value: (v) => v.rr, check: (v) => (v.rr > 22 ? "high" : v.rr < 10 ? "low" : null) },
+    temp: { icon: "thermometer", label: "Temp", long: "Temperature", unit: "°C", value: (v) => v.temp.toFixed(1), check: (v) => (v.temp >= 38 ? "high" : v.temp < 35.5 ? "low" : null) },
+    pain: { icon: "face", label: "Pain", long: "Pain score", unit: "/10", value: (v) => v.pain, check: (v) => (v.pain >= 7 ? "high" : null) },
   };
   const VITAL_ORDER = ["spo2", "hr", "bp", "rr", "temp", "pain"];
 

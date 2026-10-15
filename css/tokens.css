@@ -5,8 +5,17 @@
   Status color rules:
   - Alert (red) means one thing only: "needs attention".
   - Caution (amber) is for overdue tasks and out-of-range values.
+  - OK (green) is for "all done" and confirmations.
   - Acuity stays neutral. Sick is not the same as "something is wrong right now".
   - No status is ever shown by color alone: icon and text always come with it.
+
+  Each status is defined by ONE foreground hue per theme. Its fills are
+  mixed from that hue and the surface, with the same recipe in both themes:
+    tint  faint row wash        (--mix-tint)
+    soft  banners, tiles, hover (--mix-soft)
+    line  borders on soft fills (--mix-line)
+  So the light and night palettes can't drift apart: change a hue and
+  every fill that belongs to it follows.
 */
 
 :root {
@@ -29,42 +38,41 @@
   --color-border-strong: #a3afba;
   --color-control: #66737f;
 
-  /* Brand accent: a calm, slightly desaturated teal */
+  /* Hues: the only status colors set by hand */
   --color-accent: #0a6b74;
   --color-accent-strong: #07525a;
-  --color-accent-soft: #e0eff0;
   --color-on-accent: #ffffff;
-
-  /* Status */
   --color-alert: #b42318;
-  --color-alert-soft: #fdecea;
-  --color-alert-tint: #fff8f7;
-  --color-alert-line: #e9b7b1;
   --color-caution: #8a4f00;
-  --color-caution-soft: #fdf1dc;
   --color-ok: #2b6a3d;
   --color-on-ok: #ffffff;
 
+  /* Mix recipe (light) */
+  --mix-tint: 4%;
+  --mix-soft: 10%;
+  --mix-line: 30%;
+
   --color-focus: #1b5fd6;
   --color-backdrop: rgb(13 21 29 / 0.42);
-  --color-skeleton: #e4e8ec;
-  --color-skeleton-shine: #eef1f4;
 
   --shadow-sm: 0 1px 2px rgb(16 24 32 / 0.06);
   --shadow-drawer: -12px 0 40px rgb(16 24 32 / 0.16), -1px 0 0 rgb(16 24 32 / 0.06);
 
-  /* Type */
+  /* Type: IBM Plex Sans, tabular numerals on by default (see base.css) */
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --text-2xs: 0.75rem;    /* 12px: table headers, tags */
-  --text-xs: 0.8125rem;   /* 13px: meta, timestamps */
-  --text-sm: 0.875rem;    /* 14px: secondary text */
-  --text-base: 0.9375rem; /* 15px: body, table cells */
-  --text-md: 1.0625rem;   /* 17px: names, room numbers */
-  --text-lg: 1.375rem;    /* 22px: census numbers, drawer title */
-  --text-xl: 1.75rem;     /* 28px: page title */
+  /* Scale: small steps where dense data lives, bigger jumps for headings. */
+  --text-2xs: 0.75rem;    /* 12  overline labels, tags */
+  --text-xs: 0.8125rem;   /* 13  meta, timestamps */
+  --text-sm: 0.875rem;    /* 14  secondary text */
+  --text-base: 0.9375rem; /* 15  body, table cells */
+  --text-md: 1.0625rem;   /* 17  patient names, room numbers */
+  --text-lg: 1.25rem;     /* 20  vital values */
+  --text-xl: 1.5rem;      /* 24  census numbers, drawer title */
+  --text-2xl: 1.875rem;   /* 30  page title */
 
-  --leading-tight: 1.25;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
   --leading-normal: 1.5;
   --leading-relaxed: 1.6;
 
@@ -72,7 +80,14 @@
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --tracking-caps: 0.06em;
+  --tracking-caps: 0.07em;
+  --tracking-tight: -0.015em;
+  --tracking-display: -0.025em;
+
+  /* Icons: two sizes, one stroke weight (non-scaling, so it's identical at both) */
+  --icon-sm: 1rem;
+  --icon-md: 1.25rem;
+  --icon-stroke: 1.75px;
 
   /* Space (4px base) */
   --space-1: 0.25rem;
@@ -133,25 +148,41 @@
 
   --color-accent: #5ec3cc;
   --color-accent-strong: #86d6dd;
-  --color-accent-soft: #11343a;
   --color-on-accent: #04282c;
-
   --color-alert: #ff8d82;
-  --color-alert-soft: #3b1b19;
-  --color-alert-tint: #1f191b;
-  --color-alert-line: #6a2c27;
   --color-caution: #f2b65a;
-  --color-caution-soft: #33250f;
   --color-ok: #7fcf95;
   --color-on-ok: #06240f;
 
+  /* Light-on-dark hues read weaker as fills, so the recipe leans a little harder. */
+  --mix-tint: 7%;
+  --mix-soft: 15%;
+  --mix-line: 38%;
+
   --color-focus: #82b1ff;
   --color-backdrop: rgb(0 0 0 / 0.55);
-  --color-skeleton: #1f2a34;
-  --color-skeleton-shine: #26323d;
 
   --shadow-sm: none;
   --shadow-drawer: -12px 0 40px rgb(0 0 0 / 0.5), -1px 0 0 #27333e;
+}
+
+/* Derived fills. Declared once, recomputed per theme from the hues above. */
+:root {
+  --color-accent-soft: color-mix(in oklab, var(--color-accent) var(--mix-soft), var(--color-surface));
+  --color-accent-line: color-mix(in oklab, var(--color-accent) var(--mix-line), var(--color-surface));
+
+  --color-alert-tint: color-mix(in oklab, var(--color-alert) var(--mix-tint), var(--color-surface));
+  --color-alert-soft: color-mix(in oklab, var(--color-alert) var(--mix-soft), var(--color-surface));
+  --color-alert-line: color-mix(in oklab, var(--color-alert) var(--mix-line), var(--color-surface));
+
+  --color-caution-soft: color-mix(in oklab, var(--color-caution) var(--mix-soft), var(--color-surface));
+  --color-caution-line: color-mix(in oklab, var(--color-caution) var(--mix-line), var(--color-surface));
+
+  --color-ok-soft: color-mix(in oklab, var(--color-ok) var(--mix-soft), var(--color-surface));
+
+  /* Skeletons are ink at low strength, so they sit right in either theme. */
+  --color-skeleton: color-mix(in oklab, var(--color-ink) 8%, var(--color-surface));
+  --color-skeleton-shine: color-mix(in oklab, var(--color-ink) 3%, var(--color-surface));
 }
 
 @media (prefers-reduced-motion: reduce) {

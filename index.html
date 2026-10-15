@@ -68,7 +68,11 @@
   <main class="page">
     <div class="board-head">
       <div>
-        <p class="eyebrow" id="shift-label">Day shift, started 07:00</p>
+        <p class="shift-chip">
+          <svg class="icon" aria-hidden="true" focusable="false"><use id="shift-icon" href="#i-sun"></use></svg>
+          <span id="shift-label">Day shift</span>
+          <span class="shift-chip__since" id="shift-since">since 07:00</span>
+        </p>
         <h1 class="board-head__title">4 West Med-Surg</h1>
       </div>
       <dl class="census" id="census" aria-label="Unit at a glance">
@@ -163,19 +167,37 @@
     <div class="drawer__panel" id="drawer-panel"></div>
   </dialog>
 
-  <!-- Icon sprite. Simple 24px stroke icons, drawn for this project. -->
+  <!-- Icon sprite. One 24px grid, round caps, non-scaling strokes so the line
+       weight is identical at every size. Drawn for this project. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
-      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.75 2.75 19.5h18.5L12 3.75Z"/><path d="M12 10v4.25"/><path d="M12 17.1v.15"/></symbol>
-      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
-      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.5l4.25 4.25L18.5 8"/></symbol>
-      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.25 12.25l2.5 2.5 5-5.25"/></symbol>
-      <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4.5h14v10l-5 5H5v-15Z"/><path d="M14 19.5v-5h5"/><path d="M8.5 9h7M8.5 12.5h4"/></symbol>
-      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
-      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A7.75 7.75 0 0 1 9.5 4.5a7.75 7.75 0 1 0 10 10Z"/></symbol>
-      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.75v2M12 19.25v2M2.75 12h2M19.25 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/></symbol>
-      <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M8.5 4.5h-2a1.5 1.5 0 0 0-1.5 1.5v13.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5h-2"/><rect x="8.5" y="3" width="7" height="3.5" rx="1"/><path d="M8.5 11h7M8.5 14.5h5"/></symbol>
-      <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5.5h16M7 12h10M10 18.5h4"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 3.75 2.75 19.5h18.5L12 3.75Z"/><path vector-effect="non-scaling-stroke" d="M12 10v4.25"/><path vector-effect="non-scaling-stroke" d="M12 17.1v.15"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="8.5"/><path vector-effect="non-scaling-stroke" d="M12 7.5V12l3 2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M5.5 12.5l4.25 4.25L18.5 8"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="8.5"/><path vector-effect="non-scaling-stroke" d="M8.25 12.25l2.5 2.5 5-5.25"/></symbol>
+      <symbol id="i-note" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M5 4.5h14v10l-5 5H5v-15Z"/><path vector-effect="non-scaling-stroke" d="M14 19.5v-5h5"/><path vector-effect="non-scaling-stroke" d="M8.5 9h7M8.5 12.5h4"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M19.5 14.5A7.75 7.75 0 0 1 9.5 4.5a7.75 7.75 0 1 0 10 10Z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="4"/><path vector-effect="non-scaling-stroke" d="M12 2.75v2M12 19.25v2M2.75 12h2M19.25 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M8.5 4.5h-2a1.5 1.5 0 0 0-1.5 1.5v13.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5h-2"/><rect vector-effect="non-scaling-stroke" x="8.5" y="3" width="7" height="3.5" rx="1"/><path vector-effect="non-scaling-stroke" d="M8.5 11h7M8.5 14.5h5"/></symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M4 5.5h16M7 12h10M10 18.5h4"/></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M5.5 20.5v-16"/><path vector-effect="non-scaling-stroke" d="M5.5 4.5h12l-2.5 4 2.5 4h-12"/></symbol>
+      <symbol id="i-list-check" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M11 6.5h9M11 12h9M11 17.5h9"/><path vector-effect="non-scaling-stroke" d="M3.75 6.5l1.5 1.5 2.5-3M3.75 12l1.5 1.5 2.5-3"/><circle vector-effect="non-scaling-stroke" cx="5.5" cy="17.5" r="1.25"/></symbol>
+      <symbol id="i-activity" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M3 12h4l2.5-6.5 5 13 2.5-6.5h4"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 19.5s-7.25-4.4-7.25-9.75A4.1 4.1 0 0 1 12 7.1a4.1 4.1 0 0 1 7.25 2.65c0 5.35-7.25 9.75-7.25 9.75Z"/></symbol>
+      <symbol id="i-o2" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="9" cy="14.5" r="5"/><circle vector-effect="non-scaling-stroke" cx="17" cy="7.5" r="2.75"/><circle vector-effect="non-scaling-stroke" cx="18.25" cy="16.75" r="1.5"/></symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M4.25 17.5a8.25 8.25 0 1 1 15.5 0"/><path vector-effect="non-scaling-stroke" d="M12 14l3.5-4.5"/><circle vector-effect="non-scaling-stroke" cx="12" cy="14.5" r="1"/></symbol>
+      <symbol id="i-wind" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M3.5 9.5h10.25A2.75 2.75 0 1 0 11 6.75"/><path vector-effect="non-scaling-stroke" d="M3.5 14.5h13.25A2.75 2.75 0 1 1 14 17.25"/></symbol>
+      <symbol id="i-thermometer" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M14 14.25V5.5a2 2 0 0 0-4 0v8.75a4 4 0 1 0 4 0Z"/><path vector-effect="non-scaling-stroke" d="M12 11v6"/></symbol>
+      <symbol id="i-face" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="8.5"/><path vector-effect="non-scaling-stroke" d="M8.75 16.25a4 4 0 0 1 6.5 0"/><path vector-effect="non-scaling-stroke" d="M9 10v.25M15 10v.25"/></symbol>
+      <symbol id="i-footprints" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M8.5 3.5c-1.6 0-2.75 1.9-2.75 4.6 0 2.4 1 3.9 2.75 3.9s2.75-1.5 2.75-3.9C11.25 5.4 10.1 3.5 8.5 3.5Z"/><path vector-effect="non-scaling-stroke" d="M6.75 14.5h3.5"/><path vector-effect="non-scaling-stroke" d="M15.5 8.5c-1.6 0-2.75 1.9-2.75 4.6 0 2.4 1 3.9 2.75 3.9s2.75-1.5 2.75-3.9c0-2.7-1.15-4.6-2.75-4.6Z"/><path vector-effect="non-scaling-stroke" d="M13.75 19.75h3.5"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M6.25 16.5V11a5.75 5.75 0 0 1 11.5 0v5.5l1.5 2H4.75l1.5-2Z"/><path vector-effect="non-scaling-stroke" d="M10 20.75a2.1 2.1 0 0 0 4 0"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 3.5 5 6.25v5.25c0 4.25 2.9 7.5 7 9 4.1-1.5 7-4.75 7-9V6.25L12 3.5Z"/></symbol>
+      <symbol id="i-ban" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="8.5"/><path vector-effect="non-scaling-stroke" d="M6 6l12 12"/></symbol>
+      <symbol id="i-droplet" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 3.75s6 6.25 6 10.5a6 6 0 0 1-12 0c0-4.25 6-10.5 6-10.5Z"/></symbol>
+      <symbol id="i-exit" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M13 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H13"/><path vector-effect="non-scaling-stroke" d="M10.5 12h9M16.25 8.5 19.75 12l-3.5 3.5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M2.75 12S6 5.75 12 5.75 21.25 12 21.25 12 18 18.25 12 18.25 2.75 12 2.75 12Z"/><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 4 3.75 8.25 12 12.5l8.25-4.25L12 4Z"/><path vector-effect="non-scaling-stroke" d="M3.75 12.25 12 16.5l8.25-4.25"/><path vector-effect="non-scaling-stroke" d="M3.75 16.25 12 20.5l8.25-4.25"/></symbol>
     </defs>
   </svg>
 </body>

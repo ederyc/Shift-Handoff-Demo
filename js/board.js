@@ -4,7 +4,7 @@
 */
 (function () {
   const SH = (window.SH = window.SH || {});
-  const { esc, clock, timeAgo, icon, acuity, vital } = SH.fmt;
+  const { esc, clock, timeAgo, icon, acuity, vital, flagTag } = SH.fmt;
   const store = () => SH.store;
 
   const SHORT_UNIT = { spo2: "%", temp: "°" };
@@ -18,7 +18,7 @@
       })
       .join("");
 
-    const shown = p.flags.slice(0, 2).map((f) => `<li class="tag">${esc(f)}</li>`);
+    const shown = p.flags.slice(0, 2).map((f) => flagTag(f));
     if (p.flags.length > 2) shown.push(`<li class="tag tag--more">+${p.flags.length - 2}<span class="vh"> more</span></li>`);
     const flags = shown.length ? `<ul class="tags" aria-label="Flags">${shown.join("")}</ul>` : "";
 
@@ -55,7 +55,7 @@
         <th scope="row" role="rowheader" class="c-patient">
           <div class="who">
             <button type="button" class="who__name" data-open="${p.id}" aria-haspopup="dialog">${esc(p.name)}</button>
-            <span class="who__age"><span class="vh">Age </span>${p.age}</span>
+            <span class="who__age"><span class="vh">Age </span>${p.age} yrs</span>
           </div>
           ${attention}
           ${note}
@@ -87,35 +87,66 @@
     return `<div class="table-wrap"><table class="roster-table" role="table" aria-labelledby="roster-title">${HEAD}<tbody role="rowgroup">${patients.map(row).join("")}</tbody></table></div>`;
   }
 
+  /*
+    Skeleton rows mirror the real row's structure (name and age, attention or
+    note line, two vitals and flags, task count and due time), with varied
+    widths so the placeholder reads as content, not a barcode.
+  */
+  const SKELETON_WIDTHS = [
+    [46, 82, 60], [38, 70, 0], [52, 88, 66], [42, 64, 0], [48, 76, 54], [36, 80, 0],
+  ];
+
   function loading() {
-    const skel = Array.from({ length: 6 }, () => `
+    const skel = SKELETON_WIDTHS.map(([name, line, extra]) => `
       <tr role="row" class="row row--skeleton" aria-hidden="true">
         <td role="cell" class="c-room"><span class="sk sk--room"></span></td>
-        <td role="cell" class="c-patient"><span class="sk sk--name"></span><span class="sk sk--line"></span></td>
-        <td role="cell" class="c-acuity"><span class="sk sk--pill"></span></td>
-        <td role="cell" class="c-ind"><span class="sk sk--line"></span></td>
-        <td role="cell" class="c-tasks"><span class="sk sk--short"></span></td>
+        <td role="cell" class="c-patient">
+          <span class="sk-row"><span class="sk sk--name" style="width:${name}%"></span><span class="sk sk--age"></span></span>
+          <span class="sk sk--line" style="width:${line}%"></span>
+          ${extra ? `<span class="sk sk--line" style="width:${extra}%"></span>` : ""}
+        </td>
+        <td role="cell" class="c-acuity"><span class="sk-row"><span class="sk sk--bars"></span><span class="sk sk--word"></span></span></td>
+        <td role="cell" class="c-ind">
+          <span class="sk-row"><span class="sk sk--kv"></span><span class="sk sk--kv"></span></span>
+          <span class="sk-row"><span class="sk sk--tag"></span><span class="sk sk--tag"></span></span>
+        </td>
+        <td role="cell" class="c-tasks"><span class="sk sk--count"></span><span class="sk sk--short"></span></td>
         <td role="cell" class="c-updated"><span class="sk sk--short"></span></td>
       </tr>`).join("");
-    return `<div class="table-wrap"><table class="roster-table" role="table" aria-labelledby="roster-title">${HEAD}<tbody role="rowgroup">${skel}</tbody></table></div>`;
+    return `<div class="table-wrap table-wrap--loading"><table class="roster-table" role="table" aria-labelledby="roster-title">${HEAD}<tbody role="rowgroup">${skel}</tbody></table></div>`;
   }
 
+  /* An empty unit still shows the shape of the board it's waiting to become. */
   function emptyUnit() {
+    const ghosts = ["401", "402", "403"]
+      .map((room) => `
+        <div class="ghost__row">
+          <span class="ghost__room">${room}</span>
+          <span class="ghost__lines"><span></span><span></span></span>
+          <span class="ghost__tag">Open bed</span>
+        </div>`)
+      .join("");
     return `
-      <div class="empty">
-        ${icon("clipboard", "icon empty__icon")}
+      <div class="empty empty--unit">
+        <div class="ghost" aria-hidden="true">${ghosts}</div>
         <h3 class="empty__title">No patients assigned to 4 West yet</h3>
         <p class="empty__body">Assignments usually post about 30 minutes before shift change. The board fills in on its own as they land, no refresh needed.</p>
+        <p class="empty__live"><span class="live-dot" aria-hidden="true"></span>Watching for new assignments</p>
         <button type="button" class="btn btn--secondary" data-action="load-sample">Load sample patients</button>
       </div>`;
   }
 
-  function noMatches() {
+  /* Names the filters that are doing the excluding, so the way out is obvious. */
+  function noMatches(active = []) {
+    const list = active.length
+      ? `<ul class="empty__filters" aria-label="Active filters">${active.map((a) => `<li class="tag tag--filter">${icon("filter", "icon tag__icon")}${esc(a)}</li>`).join("")}</ul>`
+      : "";
     return `
       <div class="empty empty--compact">
-        ${icon("filter", "icon empty__icon")}
+        <span class="empty__badge">${icon("filter", "icon icon--md")}</span>
         <h3 class="empty__title">No patients match these filters</h3>
-        <p class="empty__body">Nobody on the unit fits that combination right now. Try widening acuity or switching task status back to Any.</p>
+        ${list}
+        <p class="empty__body">Nobody on the unit fits that combination right now. Remove a filter or clear them all.</p>
         <button type="button" class="btn btn--secondary" data-action="clear-filters">Clear filters</button>
       </div>`;
   }

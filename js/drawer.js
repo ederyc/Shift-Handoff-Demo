@@ -9,7 +9,7 @@
 */
 (function () {
   const SH = (window.SH = window.SH || {});
-  const { esc, clock, timeAgo, icon, acuity, vital } = SH.fmt;
+  const { esc, clock, timeAgo, icon, acuity, vital, flagTag } = SH.fmt;
   const store = SH.store;
 
   const NOTE_MAX = 280;
@@ -40,7 +40,7 @@
       const state = v.off ? `<span class="vital__state">${v.off === "high" ? "↑ High" : "↓ Low"}</span>` : "";
       return `
         <div class="vital${v.off ? " is-off" : ""}">
-          <dt>${v.def.long}</dt>
+          <dt>${icon(v.def.icon, "icon vital__icon")}${v.def.long}</dt>
           <dd><span class="vital__value">${v.value}</span><span class="vital__unit">${v.def.unit}</span>${state}</dd>
         </div>`;
     }).join("");
@@ -48,7 +48,7 @@
     return `
       <section class="dsec" aria-labelledby="d-vitals">
         <div class="dsec__head">
-          <h3 id="d-vitals">Vitals</h3>
+          <h3 id="d-vitals">${icon("activity")}Vitals</h3>
           <p class="dsec__meta">${timeAgo(p.vitals.takenAt, "Taken ")}</p>
         </div>
         <dl class="vitals">${items}</dl>
@@ -57,11 +57,11 @@
 
   function flagsSection(p) {
     const body = p.flags.length
-      ? `<ul class="tags tags--roomy">${p.flags.map((f) => `<li class="tag">${esc(f)}</li>`).join("")}</ul>`
+      ? `<ul class="tags tags--roomy">${p.flags.map(flagTag).join("")}</ul>`
       : `<p class="muted">No flags on this patient.</p>`;
     return `
       <section class="dsec" aria-labelledby="d-flags">
-        <h3 id="d-flags">Flags</h3>
+        <h3 id="d-flags">${icon("flag")}Flags</h3>
         ${body}
       </section>`;
   }
@@ -69,12 +69,12 @@
   function taskMeta(t) {
     if (t.done) {
       const by = t.doneBy === SH.SEED.currentUser ? " by you" : "";
-      return { cls: "", html: `Done ${clock(t.doneAt)}${by}` };
+      return { cls: "", html: `${icon("check-circle")}<span>Done ${clock(t.doneAt)}${by}</span>` };
     }
     if (t.dueAt < Date.now()) {
       return { cls: " is-overdue", html: `${icon("clock")}<span><strong>Overdue</strong>, was due ${clock(t.dueAt)}</span>` };
     }
-    return { cls: "", html: `Due ${clock(t.dueAt)}` };
+    return { cls: "", html: `${icon("clock")}<span>Due ${clock(t.dueAt)}</span>` };
   }
 
   function taskItem(t) {
@@ -112,7 +112,7 @@
     return `
       <section class="dsec" aria-labelledby="d-tasks">
         <div class="dsec__head">
-          <h3 id="d-tasks">Tasks</h3>
+          <h3 id="d-tasks">${icon("list-check")}Tasks</h3>
           <p class="dsec__meta" data-slot="progress-text">${progressText(p)}</p>
         </div>
         <div class="progress" aria-hidden="true"><span class="progress__fill" style="--p:${pct}"></span></div>
@@ -140,7 +140,7 @@
 
     return `
       <section class="dsec" aria-labelledby="d-notes">
-        <h3 id="d-notes">Handoff notes</h3>
+        <h3 id="d-notes">${icon("note")}Handoff notes</h3>
         <form class="note-form" novalidate>
           <label for="note-text" class="note-form__label">Note for the next shift</label>
           <textarea id="note-text" name="note" rows="3" maxlength="${NOTE_MAX}"
@@ -164,7 +164,7 @@
     panel.innerHTML = `
       <header class="dh">
         <div class="dh__top">
-          <p class="dh__eyebrow">Room ${esc(p.room)}<span aria-hidden="true"> · </span><span class="vh">, </span>Age ${p.age}</p>
+          <p class="dh__eyebrow"><span class="room-badge">Room ${esc(p.room)}</span><span class="dh__age"><span class="vh">Age </span>${p.age} yrs</span></p>
           <button type="button" class="icon-btn" data-close aria-label="Close patient details">${icon("close")}</button>
         </div>
         <h2 id="drawer-title" class="dh__name" tabindex="-1">${esc(p.name)}</h2>

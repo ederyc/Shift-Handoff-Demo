@@ -30,6 +30,20 @@
     };
   }
 
+  const TASK_LABELS = { open: "Has open tasks", overdue: "Has overdue tasks", clear: "All tasks done" };
+
+  /* Plain-language list of what's currently filtering the board. */
+  function describeFilters(f) {
+    const out = [];
+    if (f.acuity.length) {
+      const names = f.acuity.sort((a, b) => b - a).map((n) => SH.fmt.ACUITY[n]);
+      out.push(`${names.join(" or ")} acuity`);
+    }
+    if (f.attention) out.push("Needs attention");
+    if (f.tasks !== "any") out.push(TASK_LABELS[f.tasks]);
+    return out;
+  }
+
   const isFiltered = (f) => f.acuity.length > 0 || f.attention || f.tasks !== "any";
 
   function matches(p, f, now) {
@@ -118,7 +132,7 @@
     // FLIP: measure rows, swap the markup, then let rows glide to their new spots.
     const before = SH.motion.snapshot(rosterEl, ".row[data-id]");
     const hadNoMatches = Boolean(rosterEl.querySelector(".empty"));
-    rosterEl.innerHTML = shown.length ? SH.board.table(shown) : SH.board.noMatches();
+    rosterEl.innerHTML = shown.length ? SH.board.table(shown) : SH.board.noMatches(describeFilters(f));
     if (shown.length) SH.motion.flip(rosterEl, ".row[data-id]", before);
     else if (!hadNoMatches) SH.motion.fadeUp(rosterEl.querySelector(".empty"));
     hasRendered = true;
@@ -219,7 +233,9 @@
     store.load();
     SH.drawer.init();
     const shift = currentShift();
-    $("#shift-label").textContent = `${shift.name} shift, started ${shift.start}`;
+    $("#shift-label").textContent = `${shift.name} shift`;
+    $("#shift-since").textContent = `since ${shift.start}`;
+    $("#shift-icon").setAttribute("href", shift.name === "Day" ? "#i-sun" : "#i-moon");
     initTheme();
 
     initThumb();

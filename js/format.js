@@ -57,5 +57,21 @@
     return { def, off, flag, value: def.value(p.vitals) };
   }
 
-  SH.fmt = { esc, clock, ago, agoLabel, currentShift, minutesUntil, timeAgo, icon, acuity, vital, ACUITY };
+  /* Every flag gets a glyph so a row of tags can be scanned by shape, not just read. */
+  const FLAG_ICONS = {
+    "Fall risk": "footprints",
+    "Telemetry": "activity",
+    "Bed alarm on": "bell",
+    "Oxygen 2L": "o2",
+    "Contact precautions": "shield",
+    "NPO after midnight": "ban",
+    "Diabetic": "droplet",
+    "Discharge today": "exit",
+    "Sitter requested": "eye",
+    "Pressure injury risk": "layers",
+  };
+
+  const flagTag = (f) => `<li class="tag">${icon(FLAG_ICONS[f] || "flag", "icon tag__icon")}${esc(f)}</li>`;
+
+  SH.fmt = { esc, clock, ago, agoLabel, currentShift, minutesUntil, timeAgo, icon, acuity, vital, flagTag, ACUITY };
 })();
