@@ -13,14 +13,15 @@
   border: 0;
   background: transparent;
   color: inherit;
+  /* Closed: parked off the right edge. Leaving is quicker than arriving. */
   opacity: 0;
-  transform: translateX(2rem);
-  transition: transform var(--dur-base) var(--ease-in), opacity var(--dur-fast) var(--ease-in);
+  transform: translateX(100%);
+  transition: transform var(--dur-base) var(--ease-exit), opacity var(--dur-base) var(--ease-exit);
 }
 .drawer.is-open {
   opacity: 1;
   transform: none;
-  transition-timing-function: var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-settle), opacity var(--dur-fast) var(--ease-settle);
 }
 
 .drawer::backdrop {
@@ -152,7 +153,7 @@
   background: var(--color-accent);
   transform: scaleX(var(--p, 0));
   transform-origin: left;
-  transition: transform var(--dur-slow) var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-settle);
 }
 
 .task + .task { border-top: 1px solid var(--color-border); }
@@ -170,6 +171,9 @@
   transition: background-color var(--dur-fast) var(--ease-standard);
 }
 .task__hit:hover { background: var(--color-surface-hover); }
+.task__hit:active { background: var(--color-surface-pressed); }
+/* Pressing pre-loads the check: the box dips, then settles when the check lands. */
+.task__hit:active .task__box { transform: scale(var(--press-scale-strong)); }
 
 .task__input {
   position: absolute;
@@ -189,7 +193,10 @@
   border: 2px solid var(--color-control);
   border-radius: 6px;
   background: var(--color-surface);
-  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-settle);
 }
 .task__box svg { width: 1rem; height: 1rem; overflow: visible; }
 .task__box path {
@@ -200,7 +207,7 @@
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  transition: stroke-dashoffset var(--dur-base) var(--ease-out);
+  transition: stroke-dashoffset var(--dur-base) var(--ease-settle);
 }
 .task__input:focus-visible + .task__box { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 .task__hit:hover .task__box { border-color: var(--color-ink-muted); }
@@ -212,7 +219,7 @@
   font-weight: var(--weight-medium);
   /* Strike line drawn as a background so it can sweep left to right, even across wrapped lines. */
   background: linear-gradient(currentColor, currentColor) no-repeat 0 58% / 0% 1.5px;
-  transition: background-size var(--dur-slow) var(--ease-out), color var(--dur-base) var(--ease-standard);
+  transition: background-size var(--dur-slow) var(--ease-settle), color var(--dur-base) var(--ease-standard);
 }
 
 .task__meta {
@@ -242,8 +249,8 @@
   pointer-events: none;
   opacity: 0;
 }
-.task.just-done .task__box { animation: task-settle var(--dur-base) var(--ease-out); }
-.task.just-done .task__box::after { animation: task-ring var(--dur-slow) var(--ease-out); }
+.task.just-done .task__box { animation: task-settle var(--dur-base) var(--ease-settle); }
+.task.just-done .task__box::after { animation: task-ring var(--dur-slow) var(--ease-settle); }
 
 @keyframes task-settle {
   from { transform: scale(0.84); }
@@ -279,6 +286,7 @@
   resize: vertical;
   transition: opacity var(--dur-fast) var(--ease-standard);
 }
+.note-form textarea:hover { border-color: var(--color-ink-muted); }
 .note-form textarea::placeholder { color: var(--color-ink-subtle); }
 .note-form textarea:focus-visible { outline-offset: 1px; }
 .note-form textarea[aria-invalid="true"] { border-color: var(--color-alert); box-shadow: inset 0 0 0 1px var(--color-alert); }
@@ -314,6 +322,18 @@
 .note-form.is-saving textarea { opacity: 0.65; }
 .note-form.is-saving .note-form__submit { cursor: progress; }
 
+/* Saved: the button becomes a short confirmation, then quietly resets. */
+.note-form__done { display: none; }
+.note-form.is-saved .note-form__done {
+  display: inline;
+  animation: icon-in var(--dur-base) var(--ease-settle);
+}
+.note-form.is-saved .note-form__submit,
+.note-form.is-saved .note-form__submit:hover {
+  background: var(--color-ok);
+  color: var(--color-on-ok);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spinner, .sync[data-state="saving"] .sync__dot { animation-duration: 2s; }
 }
@@ -346,4 +366,9 @@
   .dh { padding-inline: var(--space-4); }
   .drawer__body { padding-inline: var(--space-4); }
   .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A zero-length transition can still carry a delay, so drop it too. */
+  .task__input:checked + .task__box path { transition-delay: 0ms; }
 }

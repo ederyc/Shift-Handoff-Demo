@@ -17,6 +17,7 @@
   --color-surface: #ffffff;
   --color-surface-sunken: #eceff2;
   --color-surface-hover: #f5f7f9;
+  --color-surface-pressed: #e8ecf0;
 
   /* Text */
   --color-ink: #16212b;
@@ -42,6 +43,7 @@
   --color-caution: #8a4f00;
   --color-caution-soft: #fdf1dc;
   --color-ok: #2b6a3d;
+  --color-on-ok: #ffffff;
 
   --color-focus: #1b5fd6;
   --color-backdrop: rgb(13 21 29 / 0.42);
@@ -94,13 +96,21 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
 
-  /* Motion */
+  /*
+    Motion. Two curves carry the whole feel, both taken from the task check-off:
+    - settle: quick start, long soft landing, no overshoot. Anything arriving,
+      moving into place or answering a press.
+    - exit: eases in, leaves fast. Anything going away.
+    Color-only changes use the plain standard curve.
+  */
   --dur-fast: 150ms;
   --dur-base: 200ms;
   --dur-slow: 250ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --press-scale: 0.97;
+  --press-scale-strong: 0.9;
 }
 
 /* Night mode: lower overall luminance for dark units, same meaning per color. */
@@ -111,6 +121,7 @@
   --color-surface: #151d25;
   --color-surface-sunken: #111820;
   --color-surface-hover: #1b252f;
+  --color-surface-pressed: #223040;
 
   --color-ink: #e5ebf0;
   --color-ink-muted: #b5c1cc;
@@ -132,6 +143,7 @@
   --color-caution: #f2b65a;
   --color-caution-soft: #33250f;
   --color-ok: #7fcf95;
+  --color-on-ok: #06240f;
 
   --color-focus: #82b1ff;
   --color-backdrop: rgb(0 0 0 / 0.55);
@@ -147,5 +159,7 @@
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-slow: 0ms;
+    --press-scale: 1;
+    --press-scale-strong: 1;
   }
 }

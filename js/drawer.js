@@ -13,11 +13,11 @@
   const store = SH.store;
 
   const NOTE_MAX = 280;
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   let dialog, panel;
   let currentId = null;
   let closing = false;
+  let savedTimer = null;
 
   /* ---------- Markup ---------- */
 
@@ -128,7 +128,7 @@
           <span class="note__author">${esc(n.author)}</span>
           <span class="shift">${esc(n.shift)}</span>
           ${timeAgo(n.createdAt)}
-          ${isNew ? `<span class="note__new">Added just now</span>` : ""}
+          ${isNew ? `<span class="note__new">New</span>` : ""}
         </p>
       </li>`;
   }
@@ -151,7 +151,7 @@
             <p class="note-form__hint" id="note-hint">Shows on the board as the latest note. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves.</p>
             <p class="note-form__count" id="note-count"><span data-slot="count">0</span> / ${NOTE_MAX}</p>
             <button type="submit" class="btn btn--primary note-form__submit">
-              <span class="spinner" aria-hidden="true"></span><span data-slot="submit-label">Save note</span>
+              <span class="spinner" aria-hidden="true"></span>${icon("check", "icon note-form__done")}<span data-slot="submit-label">Save note</span>
             </button>
           </div>
           <p class="vh" role="status" data-slot="note-status"></p>
@@ -204,7 +204,7 @@
     li.querySelector(".task__meta").innerHTML = meta.html;
 
     // The one celebratory beat: a class that only exists for the length of the animation.
-    if (done && !reducedMotion.matches) {
+    if (done && !SH.motion.reduced()) {
       li.classList.remove("just-done");
       void li.offsetWidth;
       li.classList.add("just-done");
@@ -216,6 +216,8 @@
 
   async function onNoteSubmit(form) {
     if (form.classList.contains("is-saving")) return;
+    clearTimeout(savedTimer);
+    form.classList.remove("is-saved");
 
     const field = form.querySelector("textarea");
     const error = form.querySelector(".note-form__error");
@@ -249,15 +251,25 @@
       n.querySelector(".note__new")?.remove();
     });
     list.insertAdjacentHTML("afterbegin", noteItem(note, true));
+    SH.motion.fadeUp(list.firstElementChild, 0, -6);
 
     field.value = "";
     field.readOnly = false;
     form.classList.remove("is-saving");
     button.removeAttribute("aria-disabled");
-    form.querySelector('[data-slot="submit-label"]').textContent = "Save note";
     form.querySelector('[data-slot="count"]').textContent = "0";
     status.textContent = "Note saved. It's now the latest note on the board.";
     refreshSummary(store.patient(pid));
+
+    // Brief confirmation on the button itself, where the person is already looking.
+    const label = form.querySelector('[data-slot="submit-label"]');
+    form.classList.add("is-saved");
+    label.textContent = "Saved";
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => {
+      form.classList.remove("is-saved");
+      label.textContent = "Save note";
+    }, 1600);
   }
 
   function onNoteInput(field) {
@@ -273,7 +285,7 @@
 
   /* ---------- Focus handling ---------- */
 
-  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   function trapTab(e) {
     if (e.key !== "Tab") return;
@@ -302,6 +314,9 @@
     void dialog.offsetWidth; // commit the starting position so the slide-in runs
     dialog.classList.add("is-open");
     panel.querySelector("#drawer-title").focus();
+
+    // Content follows the panel in, one section at a time, so the eye lands top first.
+    [...panel.querySelectorAll(".drawer__body > :not(:empty)")].forEach((el, i) => SH.motion.fadeUp(el, 60 + i * 35));
   }
 
   function close() {
@@ -309,7 +324,7 @@
     closing = true;
     const id = currentId;
     dialog.classList.remove("is-open");
-    const ms = reducedMotion.matches ? 0 : 200;
+    const ms = SH.motion.ms("--dur-base");
     setTimeout(() => {
       dialog.close();
       closing = false;

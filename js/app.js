@@ -14,6 +14,7 @@
   const filtersForm = $("#filters");
 
   let loading = true;
+  let hasRendered = false;
 
   /* ---------- Filters and sort ---------- */
 
@@ -60,12 +61,20 @@
     const open = patients.reduce((n, p) => n + store.openTasks(p).length, 0);
     const overdue = patients.reduce((n, p) => n + store.overdueTasks(p, now).length, 0);
 
-    $("#census-patients").textContent = patients.length;
-    $("#census-attention").textContent = attention;
-    $("#census-open").textContent = open;
-    $("#census-overdue").textContent = overdue;
+    setCount($("#census-patients"), patients.length);
+    setCount($("#census-attention"), attention);
+    setCount($("#census-open"), open);
+    setCount($("#census-overdue"), overdue);
     $("#census-attention").closest(".census__item").classList.toggle("is-alert", attention > 0);
     $("#census-overdue").closest(".census__item").classList.toggle("is-caution", overdue > 0);
+  }
+
+  /* Update a number, and nudge it if it changed while someone was looking. */
+  function setCount(el, value) {
+    const next = String(value);
+    if (el.textContent === next) return;
+    el.textContent = next;
+    if (!loading && hasRendered) SH.motion.bump(el);
   }
 
   function renderChipCounts(patients, now) {
@@ -97,6 +106,7 @@
     if (!all.length) {
       rosterEl.innerHTML = SH.board.emptyUnit();
       countEl.textContent = "No patients assigned";
+      SH.motion.fadeUp(rosterEl.querySelector(".empty"));
       return;
     }
 
@@ -104,7 +114,14 @@
     countEl.textContent = shown.length === all.length
       ? `Showing all ${all.length} patients`
       : `Showing ${shown.length} of ${all.length} patients`;
+
+    // FLIP: measure rows, swap the markup, then let rows glide to their new spots.
+    const before = SH.motion.snapshot(rosterEl, ".row[data-id]");
+    const hadNoMatches = Boolean(rosterEl.querySelector(".empty"));
     rosterEl.innerHTML = shown.length ? SH.board.table(shown) : SH.board.noMatches();
+    if (shown.length) SH.motion.flip(rosterEl, ".row[data-id]", before);
+    else if (!hadNoMatches) SH.motion.fadeUp(rosterEl.querySelector(".empty"));
+    hasRendered = true;
   }
 
   /* After the drawer closes, put focus back on that patient's row if it's still listed. */
@@ -127,6 +144,7 @@
         if (--pending === 0) {
           syncEl.dataset.state = "saved";
           syncEl.querySelector("[data-slot]").textContent = "All changes saved";
+          SH.motion.animate(syncEl.querySelector(".sync__dot"), [{ transform: "scale(1.9)" }, { transform: "none" }]);
         }
       });
       return promise;
@@ -160,8 +178,31 @@
         localStorage.setItem("steadyhand:theme", next);
       } catch (e) {}
       sync();
+      SH.motion.animate(btn.querySelector("svg"), [{ transform: "rotate(-90deg) scale(0.6)", opacity: 0 }, { transform: "none", opacity: 1 }]);
     });
     sync();
+  }
+
+  /* ---------- Segmented control thumb ---------- */
+
+  const segmented = $(".segmented");
+  const thumb = segmented.querySelector(".segmented__thumb");
+
+  function placeThumb() {
+    const face = segmented.querySelector("input:checked + span");
+    if (!face) return;
+    const track = segmented.getBoundingClientRect();
+    const rect = face.getBoundingClientRect();
+    thumb.style.width = `${rect.width}px`;
+    thumb.style.transform = `translateX(${rect.left - track.left - segmented.clientLeft}px)`;
+  }
+
+  function initThumb() {
+    placeThumb();
+    // Only animate once it's in place, so the first paint doesn't slide in from the left.
+    requestAnimationFrame(() => thumb.classList.add("is-ready"));
+    new ResizeObserver(placeThumb).observe(segmented);
+    document.fonts?.ready.then(placeThumb);
   }
 
   /* ---------- Events ---------- */
@@ -169,6 +210,8 @@
   function clearFilters() {
     filtersForm.querySelectorAll('input[type="checkbox"]').forEach((el) => (el.checked = false));
     filtersForm.querySelector('input[name="tasks"][value="any"]').checked = true;
+    filtersForm.querySelector("#sort").value = DEFAULT_SORT;
+    placeThumb();
     render();
   }
 
@@ -179,8 +222,13 @@
     $("#shift-label").textContent = `${shift.name} shift, started ${shift.start}`;
     initTheme();
 
+    initThumb();
+
     // "input" fires on every checkbox, radio and select change: the list updates instantly.
-    filtersForm.addEventListener("input", render);
+    filtersForm.addEventListener("input", (e) => {
+      if (e.target.name === "tasks") placeThumb();
+      render();
+    });
     filtersForm.addEventListener("submit", (e) => e.preventDefault());
 
     clearBtn.addEventListener("click", () => {

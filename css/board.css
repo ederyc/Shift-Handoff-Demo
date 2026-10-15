@@ -58,6 +58,7 @@
 /* The patient name button stretches over the whole row: one big, native target. */
 .row { position: relative; }
 .row:not(.row--skeleton):hover > * { background: var(--color-surface-hover); }
+.row:not(.row--skeleton):active > * { background: var(--color-surface-pressed); }
 
 .who__name {
   padding: 0;
@@ -83,6 +84,7 @@
 
 /* Needs attention: a left rule, a faint tint, and the labeled line inside the row. */
 .row.is-attention > * { background: var(--color-alert-tint); }
+.row.is-attention:hover > * { background: var(--color-alert-soft); }
 .row.is-attention > :first-child { box-shadow: inset 4px 0 0 var(--color-alert); }
 
 /* ---------- Cells ---------- */
@@ -264,6 +266,7 @@
   .row + .row { border-top: 1px solid var(--color-border); }
   .row.is-attention { background: var(--color-alert-tint); box-shadow: inset 4px 0 0 var(--color-alert); padding-left: calc(var(--space-4) + 4px); }
   .row:not(.row--skeleton):hover { background: var(--color-surface-hover); }
+  .row:not(.row--skeleton):active { background: var(--color-surface-pressed); }
 
   .c-room { grid-area: room; }
   .c-patient { grid-area: patient; }
