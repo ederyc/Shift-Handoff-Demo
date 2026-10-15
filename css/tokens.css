@@ -1,0 +1,151 @@
+/*
+  Design tokens. Every color, size, space, radius and duration in the
+  other stylesheets comes from here.
+
+  Status color rules:
+  - Alert (red) means one thing only: "needs attention".
+  - Caution (amber) is for overdue tasks and out-of-range values.
+  - Acuity stays neutral. Sick is not the same as "something is wrong right now".
+  - No status is ever shown by color alone: icon and text always come with it.
+*/
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-canvas: #f2f4f6;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #eceff2;
+  --color-surface-hover: #f5f7f9;
+
+  /* Text */
+  --color-ink: #16212b;
+  --color-ink-muted: #43505c;
+  --color-ink-subtle: #5a6672;
+
+  /* Lines and controls */
+  --color-border: #d8dee4;
+  --color-border-strong: #a3afba;
+  --color-control: #66737f;
+
+  /* Brand accent: a calm, slightly desaturated teal */
+  --color-accent: #0a6b74;
+  --color-accent-strong: #07525a;
+  --color-accent-soft: #e0eff0;
+  --color-on-accent: #ffffff;
+
+  /* Status */
+  --color-alert: #b42318;
+  --color-alert-soft: #fdecea;
+  --color-alert-tint: #fff8f7;
+  --color-alert-line: #e9b7b1;
+  --color-caution: #8a4f00;
+  --color-caution-soft: #fdf1dc;
+  --color-ok: #2b6a3d;
+
+  --color-focus: #1b5fd6;
+  --color-backdrop: rgb(13 21 29 / 0.42);
+  --color-skeleton: #e4e8ec;
+  --color-skeleton-shine: #eef1f4;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 32 / 0.06);
+  --shadow-drawer: -12px 0 40px rgb(16 24 32 / 0.16), -1px 0 0 rgb(16 24 32 / 0.06);
+
+  /* Type */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --text-2xs: 0.75rem;    /* 12px: table headers, tags */
+  --text-xs: 0.8125rem;   /* 13px: meta, timestamps */
+  --text-sm: 0.875rem;    /* 14px: secondary text */
+  --text-base: 0.9375rem; /* 15px: body, table cells */
+  --text-md: 1.0625rem;   /* 17px: names, room numbers */
+  --text-lg: 1.375rem;    /* 22px: census numbers, drawer title */
+  --text-xl: 1.75rem;     /* 28px: page title */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --tracking-caps: 0.06em;
+
+  /* Space (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --gutter: clamp(1rem, 3vw, 2rem);
+  --page-max: 82rem;
+  --drawer-width: 36rem;
+  --tap: 2.75rem; /* 44px minimum target */
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 250ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Night mode: lower overall luminance for dark units, same meaning per color. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-canvas: #0e141a;
+  --color-surface: #151d25;
+  --color-surface-sunken: #111820;
+  --color-surface-hover: #1b252f;
+
+  --color-ink: #e5ebf0;
+  --color-ink-muted: #b5c1cc;
+  --color-ink-subtle: #95a3b0;
+
+  --color-border: #27333e;
+  --color-border-strong: #44525f;
+  --color-control: #7d8b98;
+
+  --color-accent: #5ec3cc;
+  --color-accent-strong: #86d6dd;
+  --color-accent-soft: #11343a;
+  --color-on-accent: #04282c;
+
+  --color-alert: #ff8d82;
+  --color-alert-soft: #3b1b19;
+  --color-alert-tint: #1f191b;
+  --color-alert-line: #6a2c27;
+  --color-caution: #f2b65a;
+  --color-caution-soft: #33250f;
+  --color-ok: #7fcf95;
+
+  --color-focus: #82b1ff;
+  --color-backdrop: rgb(0 0 0 / 0.55);
+  --color-skeleton: #1f2a34;
+  --color-skeleton-shine: #26323d;
+
+  --shadow-sm: none;
+  --shadow-drawer: -12px 0 40px rgb(0 0 0 / 0.5), -1px 0 0 #27333e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}

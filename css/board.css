@@ -1,0 +1,275 @@
+/* The roster board: table, rows, cell content, loading and empty states. */
+
+.roster__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-height: var(--tap);
+  margin-bottom: var(--space-3);
+}
+.roster__title { font-size: var(--text-md); font-weight: var(--weight-semibold); }
+.roster__count { color: var(--color-ink-subtle); font-size: var(--text-sm); }
+#clear-filters { margin-left: auto; }
+
+.table-wrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: clip;
+}
+
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+
+.col-room { width: 5rem; }
+.col-acuity { width: 8rem; }
+.col-ind { width: 15.5rem; }
+.col-tasks { width: 9.5rem; }
+.col-updated { width: 7.5rem; }
+
+.roster-table thead th {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-sunken);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-ink-subtle);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.roster-table tbody td,
+.roster-table tbody th {
+  padding: var(--space-4);
+  vertical-align: top;
+  font-weight: var(--weight-regular);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+/* Rows are separated by whitespace and one hairline, nothing heavier. */
+.row + .row > * { border-top: 1px solid var(--color-border); }
+
+/* The patient name button stretches over the whole row: one big, native target. */
+.row { position: relative; }
+.row:not(.row--skeleton):hover > * { background: var(--color-surface-hover); }
+
+.who__name {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-align: left;
+}
+.who__name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.who__name:focus-visible { outline: none; }
+.who__name:focus-visible::after {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+  border-radius: var(--radius-sm);
+}
+.row:hover .who__name { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* Needs attention: a left rule, a faint tint, and the labeled line inside the row. */
+.row.is-attention > * { background: var(--color-alert-tint); }
+.row.is-attention > :first-child { box-shadow: inset 4px 0 0 var(--color-alert); }
+
+/* ---------- Cells ---------- */
+
+.c-room {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink-muted);
+}
+
+.who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--space-2); }
+.who__age { color: var(--color-ink-subtle); font-size: var(--text-sm); }
+
+.attn {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  margin-top: var(--space-1);
+  color: var(--color-alert);
+  font-size: var(--text-sm);
+}
+.attn__icon { align-self: center; stroke-width: 2.25; }
+.attn__label { font-weight: var(--weight-semibold); }
+.attn__reason { color: var(--color-ink); }
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+.preview .icon { color: var(--color-ink-subtle); width: 1rem; height: 1rem; }
+.preview__text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.preview--none { color: var(--color-ink-subtle); font-style: italic; }
+
+.acuity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.acuity--3 { color: var(--color-ink); font-weight: var(--weight-semibold); }
+.acuity__bars { width: 0.85rem; height: 0.8rem; }
+.acuity__bars .on { fill: currentColor; }
+.acuity__bars .off { fill: var(--color-border-strong); }
+
+.kvs { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.kv { white-space: nowrap; }
+.kv__label { color: var(--color-ink-subtle); font-size: var(--text-xs); }
+.kv__value { font-weight: var(--weight-medium); }
+.kv.is-off .kv__value { color: var(--color-caution); font-weight: var(--weight-semibold); }
+.vital__flag { margin-left: 1px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.tag {
+  padding: 1px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+  color: var(--color-ink-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.tag--more { background: transparent; }
+
+.c-tasks { font-size: var(--text-sm); }
+.tcell__count { display: block; font-size: var(--text-base); font-weight: var(--weight-semibold); }
+.tcell__next { color: var(--color-ink-subtle); }
+.tcell__overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-caution);
+  font-weight: var(--weight-semibold);
+}
+.tcell--clear {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-ok);
+  font-weight: var(--weight-medium);
+}
+
+.c-updated { color: var(--color-ink-subtle); font-size: var(--text-sm); }
+
+/* ---------- Loading skeleton ---------- */
+
+.sk {
+  display: block;
+  height: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-skeleton) 0%, var(--color-skeleton-shine) 50%, var(--color-skeleton) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.sk--room { width: 2rem; height: 1rem; }
+.sk--name { width: 55%; height: 1rem; margin-bottom: var(--space-3); }
+.sk--line { width: 80%; }
+.sk--pill { width: 4rem; }
+.sk--short { width: 4.5rem; }
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk { animation: none; }
+}
+
+/* ---------- Empty states ---------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.empty--compact { padding-block: var(--space-10); }
+.empty__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: var(--space-2);
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  stroke-width: 1.75;
+}
+.empty__title { font-size: var(--text-md); font-weight: var(--weight-semibold); }
+.empty__body {
+  max-width: 28rem;
+  margin-bottom: var(--space-2);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* ---------- Narrow screens: rows reflow into cards ---------- */
+
+@media (max-width: 52rem) {
+  /* Explicit display values on table parts drop table semantics in some
+     browsers, so the narrow layout keeps the header for screen readers
+     and only hides it visually. */
+  .roster-table thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .roster-table, .roster-table tbody { display: block; }
+  .roster-table colgroup { display: none; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "room patient acuity"
+      "room ind     ind"
+      "room tasks   updated";
+    gap: var(--space-3) var(--space-3);
+    padding: var(--space-4);
+  }
+  .row > * { padding: 0 !important; border: 0 !important; background: none !important; }
+  .row + .row { border-top: 1px solid var(--color-border); }
+  .row.is-attention { background: var(--color-alert-tint); box-shadow: inset 4px 0 0 var(--color-alert); padding-left: calc(var(--space-4) + 4px); }
+  .row:not(.row--skeleton):hover { background: var(--color-surface-hover); }
+
+  .c-room { grid-area: room; }
+  .c-patient { grid-area: patient; }
+  .c-acuity { grid-area: acuity; }
+  .c-ind { grid-area: ind; }
+  .c-tasks { grid-area: tasks; display: flex; flex-wrap: wrap; gap: 0 var(--space-2); align-items: baseline; }
+  .c-updated { grid-area: updated; text-align: right; align-self: end; }
+  .tcell__count { display: inline; }
+}

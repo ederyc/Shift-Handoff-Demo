@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steadyhand · 4 West Board</title>
+  <meta name="description" content="A concept clinical shift handoff board. Fictional unit, fictional patients, built as a UX and front-end practice piece.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <!-- Set the theme before first paint so night mode never flashes white. -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("steadyhand:theme"); } catch (e) {}
+      if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/board.css">
+  <link rel="stylesheet" href="css/drawer.css">
+
+  <script src="js/data.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/format.js" defer></script>
+  <script src="js/board.js" defer></script>
+  <script src="js/drawer.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#roster-title">Skip to patient list</a>
+
+  <p class="demo-strip">Concept demo with fictional patients. Not a real clinical system.</p>
+
+  <header class="appbar">
+    <div class="appbar__inner">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+          <rect width="28" height="28" rx="7"/>
+          <path d="M5 15h4.5l2.25-5 4 9 2.25-4H23"/>
+        </svg>
+        <span class="brand__name">Steadyhand</span>
+        <span class="brand__divider" aria-hidden="true"></span>
+        <span class="brand__org">Harbor Point General</span>
+      </div>
+
+      <div class="appbar__tools">
+        <p class="sync" id="sync-status" data-state="saved" role="status">
+          <span class="sync__dot" aria-hidden="true"></span><span data-slot>All changes saved</span>
+        </p>
+        <p class="user"><span class="vh">Signed in as </span>S. Rivera, RN</p>
+        <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
+          <span class="icon-btn__label">Night mode</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="board-head">
+      <div>
+        <p class="eyebrow" id="shift-label">Day shift, started 07:00</p>
+        <h1 class="board-head__title">4 West Med-Surg</h1>
+      </div>
+      <dl class="census" id="census" aria-label="Unit at a glance">
+        <div class="census__item">
+          <dt>Patients</dt>
+          <dd id="census-patients">0</dd>
+        </div>
+        <div class="census__item census__item--attention">
+          <dt>Need attention</dt>
+          <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg><span id="census-attention">0</span></dd>
+        </div>
+        <div class="census__item">
+          <dt>Open tasks</dt>
+          <dd id="census-open">0</dd>
+        </div>
+        <div class="census__item census__item--overdue">
+          <dt>Overdue</dt>
+          <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg><span id="census-overdue">0</span></dd>
+        </div>
+      </dl>
+    </div>
+
+    <section class="controls" aria-labelledby="controls-title">
+      <h2 id="controls-title" class="vh">Filter and sort</h2>
+      <form id="filters" class="filters">
+        <fieldset class="filters__group">
+          <legend>Acuity</legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="acuity" value="3"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>High <span class="chip__count" data-count="acuity-3">0</span></span></label>
+            <label class="chip"><input type="checkbox" name="acuity" value="2"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Medium <span class="chip__count" data-count="acuity-2">0</span></span></label>
+            <label class="chip"><input type="checkbox" name="acuity" value="1"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Low <span class="chip__count" data-count="acuity-1">0</span></span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="filters__group">
+          <legend>Status</legend>
+          <div class="chips">
+            <label class="chip chip--attention"><input type="checkbox" name="attention"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg><svg class="icon chip__alert" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>Needs attention <span class="chip__count" data-count="attention">0</span></span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="filters__group">
+          <legend>Tasks</legend>
+          <div class="segmented">
+            <label><input type="radio" name="tasks" value="any" checked><span>Any</span></label>
+            <label><input type="radio" name="tasks" value="open"><span>Open</span></label>
+            <label><input type="radio" name="tasks" value="overdue"><span>Overdue</span></label>
+            <label><input type="radio" name="tasks" value="clear"><span>All done</span></label>
+          </div>
+        </fieldset>
+
+        <div class="filters__group filters__sort">
+          <label for="sort" class="filters__label">Sort by</label>
+          <div class="select">
+            <select id="sort" name="sort">
+              <option value="priority">Priority</option>
+              <option value="room">Room number</option>
+              <option value="tasks">Most open tasks</option>
+              <option value="stale">Longest since update</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="roster" aria-labelledby="roster-title">
+      <div class="roster__bar">
+        <h2 id="roster-title" class="roster__title" tabindex="-1">Patients</h2>
+        <p id="result-count" class="roster__count" role="status">Loading patients</p>
+        <button type="button" id="clear-filters" class="btn btn--ghost" hidden>Clear filters</button>
+      </div>
+      <div id="roster"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <p class="site-footer__about"><strong>Steadyhand</strong> is a self-directed concept piece by Eder. The hospital, unit, staff and patients are all invented, and nothing here is real software or real clinical guidance. Changes save to this browser only.</p>
+      <section id="demo-controls" class="demo-controls" aria-labelledby="demo-title">
+        <h2 id="demo-title" class="demo-controls__title">Demo controls</h2>
+        <div class="demo-controls__buttons">
+          <button type="button" class="btn btn--secondary btn--small" data-demo="loading">Replay loading</button>
+          <button type="button" class="btn btn--secondary btn--small" data-demo="empty">Show empty unit</button>
+          <button type="button" class="btn btn--secondary btn--small" data-demo="reset">Reset sample data</button>
+        </div>
+      </section>
+    </div>
+  </footer>
+
+  <dialog id="drawer" class="drawer" aria-labelledby="drawer-title">
+    <div class="drawer__panel" id="drawer-panel"></div>
+  </dialog>
+
+  <!-- Icon sprite. Simple 24px stroke icons, drawn for this project. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.75 2.75 19.5h18.5L12 3.75Z"/><path d="M12 10v4.25"/><path d="M12 17.1v.15"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.5l4.25 4.25L18.5 8"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.25 12.25l2.5 2.5 5-5.25"/></symbol>
+      <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4.5h14v10l-5 5H5v-15Z"/><path d="M14 19.5v-5h5"/><path d="M8.5 9h7M8.5 12.5h4"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A7.75 7.75 0 0 1 9.5 4.5a7.75 7.75 0 1 0 10 10Z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.75v2M12 19.25v2M2.75 12h2M19.25 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M8.5 4.5h-2a1.5 1.5 0 0 0-1.5 1.5v13.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5h-2"/><rect x="8.5" y="3" width="7" height="3.5" rx="1"/><path d="M8.5 11h7M8.5 14.5h5"/></symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5.5h16M7 12h10M10 18.5h4"/></symbol>
+    </defs>
+  </svg>
+</body>
+</html>
