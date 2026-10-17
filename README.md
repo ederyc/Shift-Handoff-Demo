@@ -2,7 +2,7 @@
 
 **Live demo: https://ederyc.github.io/Shift-Handoff-Demo/**
 
-![The Steadyhand board for a fictional unit, 4 West Med-Surg](docs/images/board.png)
+![The Steadyhand board for a fictional unit, 4 West Med-Surg, sorted by room: flagged patients sit among calm ones](docs/images/board.png)
 
 **This is a self-directed concept and practice project.** It isn't real software, it isn't deployed anywhere clinical, and it isn't affiliated with any healthcare company or product. There was no client and no user research. The hospital ("Harbor Point General"), the unit ("4 West Med-Surg"), the staff and all 13 patients are invented. The vitals are rounded on purpose and the "out of range" rules are deliberately simple. None of it is clinical guidance.
 

@@ -4,7 +4,9 @@
 
 **Live demo: https://ederyc.github.io/Shift-Handoff-Demo/**
 
-![The Steadyhand roster board for a fictional unit, 4 West Med-Surg](images/board.png)
+![The Steadyhand roster board for a fictional unit, 4 West Med-Surg, sorted by room](images/board.png)
+
+*Sorted by room here, the way you'd walk the floor. The default sort puts the five patients who need attention at the top.*
 
 ## The problem
 
