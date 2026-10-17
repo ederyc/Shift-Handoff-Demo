@@ -18,6 +18,10 @@
   let currentId = null;
   let closing = false;
   let savedTimer = null;
+  let showAllActivity = false;
+
+  const ACT_LIMIT = 6;
+  const ACT_ICONS = { vitals: "activity", concern: "alert", note: "note", "task-done": "check-circle", "task-reopened": "undo" };
 
   /* ---------- Markup ---------- */
 
@@ -68,7 +72,7 @@
 
   function taskMeta(t) {
     if (t.done) {
-      const by = t.doneBy === SH.SEED.currentUser ? " by you" : "";
+      const by = t.doneBy === SH.SEED.currentUser ? " by you" : t.doneBy ? ` by ${t.doneBy.replace(/,.*$/, "")}` : "";
       return { cls: "", html: `${icon("check-circle")}<span>Done ${clock(t.doneAt)}${by}</span>` };
     }
     if (t.dueAt < Date.now()) {
@@ -160,12 +164,79 @@
       </section>`;
   }
 
+  function activityItem(e) {
+    const who = e.who === SH.SEED.currentUser ? "You" : esc(e.who);
+    return `
+      <li class="act act--${e.kind}">
+        <span class="act__icon">${icon(ACT_ICONS[e.kind] || "history")}</span>
+        <p class="act__text"><strong>${who}</strong> ${esc(e.text)}</p>
+        <p class="act__time"><span>${clock(e.at)}</span><span aria-hidden="true"> · </span>${timeAgo(e.at)}</p>
+      </li>`;
+  }
+
+  function activityList(p) {
+    const items = showAllActivity ? p.activity : p.activity.slice(0, ACT_LIMIT);
+    return items.map(activityItem).join("");
+  }
+
+  function activityMore(p) {
+    if (p.activity.length <= ACT_LIMIT) return "";
+    return `<button type="button" class="btn btn--ghost btn--small act__more" data-action="more-activity" aria-expanded="${showAllActivity}" aria-controls="d-activity-list">
+      ${showAllActivity ? "Show fewer" : `Show all ${p.activity.length}`}
+    </button>`;
+  }
+
+  function activitySection(p) {
+    return `
+      <section class="dsec" aria-labelledby="d-activity">
+        <div class="dsec__head">
+          <h3 id="d-activity">${icon("history")}Activity</h3>
+          <p class="dsec__meta">Newest first</p>
+        </div>
+        <ol class="activity" id="d-activity-list" data-slot="activity">${activityList(p)}</ol>
+        <div data-slot="activity-more">${activityMore(p)}</div>
+      </section>`;
+  }
+
+  function refreshActivity(p) {
+    const list = panel.querySelector('[data-slot="activity"]');
+    const firstBefore = list.firstElementChild?.textContent;
+    list.innerHTML = activityList(p);
+    panel.querySelector('[data-slot="activity-more"]').innerHTML = activityMore(p);
+    if (list.firstElementChild && list.firstElementChild.textContent !== firstBefore) {
+      SH.motion.fadeUp(list.firstElementChild, 0, -6);
+    }
+  }
+
+  /* Previous / next follow the board's current order, so rounding goes in the order you're looking at. */
+  function navState(id) {
+    const order = SH.app.navOrder(id);
+    const i = order.indexOf(id);
+    const name = (pid) => store.patient(pid)?.name;
+    return { order, i, prev: order[i - 1], next: order[i + 1], name };
+  }
+
+  function navButton(dir, target, name) {
+    const label = dir < 0 ? "Previous patient" : "Next patient";
+    const key = dir < 0 ? "[" : "]";
+    return `<button type="button" class="icon-btn" data-step="${dir}" aria-keyshortcuts="${key}"
+      aria-label="${target ? `${label}: ${esc(name(target))}` : `${label} (none)`}" ${target ? "" : 'aria-disabled="true"'}
+      title="${label} (${key})">${icon(dir < 0 ? "chevron-up" : "chevron-down")}</button>`;
+  }
+
   function render(p) {
+    const nav = navState(p.id);
     panel.innerHTML = `
       <header class="dh">
         <div class="dh__top">
           <p class="dh__eyebrow"><span class="room-badge">Room ${esc(p.room)}</span><span class="dh__age"><span class="vh">Age </span>${p.age} yrs</span></p>
-          <button type="button" class="icon-btn" data-close aria-label="Close patient details">${icon("close")}</button>
+          <div class="dh__actions">
+            <p class="dh__pos">${nav.i + 1} of ${nav.order.length}</p>
+            ${navButton(-1, nav.prev, nav.name)}
+            ${navButton(1, nav.next, nav.name)}
+            <span class="dh__sep" aria-hidden="true"></span>
+            <button type="button" class="icon-btn" data-close aria-label="Close patient details" aria-keyshortcuts="Escape">${icon("close")}</button>
+          </div>
         </div>
         <h2 id="drawer-title" class="dh__name" tabindex="-1">${esc(p.name)}</h2>
         <div class="dh__meta">${acuity(p.acuity)}<span class="dh__updated" data-slot="updated">${timeAgo(p.updatedAt, "Updated ")}</span></div>
@@ -176,6 +247,7 @@
         ${flagsSection(p)}
         ${tasksSection(p)}
         ${notesSection(p)}
+        ${activitySection(p)}
       </div>`;
   }
 
@@ -188,6 +260,12 @@
     const done = p.tasks.length - store.openTasks(p).length;
     const fill = panel.querySelector(".progress__fill");
     if (fill) fill.style.setProperty("--p", p.tasks.length ? done / p.tasks.length : 0);
+
+    // A check-off can re-sort the board behind the drawer, so next/previous may have changed.
+    const nav = navState(p.id);
+    panel.querySelector(".dh__pos").textContent = `${nav.i + 1} of ${nav.order.length}`;
+    panel.querySelector('[data-step="-1"]').outerHTML = navButton(-1, nav.prev, nav.name);
+    panel.querySelector('[data-step="1"]').outerHTML = navButton(1, nav.next, nav.name);
   }
 
   function onTaskChange(input) {
@@ -212,6 +290,7 @@
     }
 
     refreshSummary(p);
+    refreshActivity(p);
   }
 
   async function onNoteSubmit(form) {
@@ -260,6 +339,7 @@
     form.querySelector('[data-slot="count"]').textContent = "0";
     status.textContent = "Note saved. It's now the latest note on the board.";
     refreshSummary(store.patient(pid));
+    refreshActivity(store.patient(pid));
 
     // Brief confirmation on the button itself, where the person is already looking.
     const label = form.querySelector('[data-slot="submit-label"]');
@@ -305,10 +385,32 @@
 
   /* ---------- Open / close ---------- */
 
+  /* Swap to another patient without closing: content slides in from the direction of travel. */
+  function switchTo(id, dir) {
+    const p = store.patient(id);
+    if (!p) return;
+    currentId = id;
+    showAllActivity = false;
+    clearTimeout(savedTimer);
+    render(p);
+    panel.scrollTop = 0;
+    panel.querySelector("#drawer-title").focus();
+    SH.motion.fadeUp(panel.querySelector(".dh__name"), 0, 8 * dir);
+    [...panel.querySelectorAll(".drawer__body > :not(:empty)")].forEach((el, i) => SH.motion.fadeUp(el, 30 + i * 25, 10 * dir));
+  }
+
+  function step(dir) {
+    const nav = navState(currentId);
+    const target = dir < 0 ? nav.prev : nav.next;
+    if (target) switchTo(target, dir);
+  }
+
   function open(id) {
     const p = store.patient(id);
     if (!p || closing) return;
+    if (dialog.open) return switchTo(id, 1);
     currentId = id;
+    showAllActivity = false;
     render(p);
     dialog.showModal();
     void dialog.offsetWidth; // commit the starting position so the slide-in runs
@@ -345,7 +447,14 @@
 
     // Clicks that land on the dialog itself (not the panel) are backdrop clicks.
     dialog.addEventListener("click", (e) => {
-      if (e.target === dialog || e.target.closest("[data-close]")) close();
+      if (e.target === dialog || e.target.closest("[data-close]")) return close();
+      const stepBtn = e.target.closest("[data-step]");
+      if (stepBtn && stepBtn.getAttribute("aria-disabled") !== "true") return step(Number(stepBtn.dataset.step));
+      if (e.target.closest('[data-action="more-activity"]')) {
+        showAllActivity = !showAllActivity;
+        refreshActivity(store.patient(currentId));
+        panel.querySelector('[data-action="more-activity"]')?.focus();
+      }
     });
 
     panel.addEventListener("change", (e) => {
@@ -362,9 +471,16 @@
       if (e.target.matches("#note-text") && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         onNoteSubmit(e.target.form);
+        return;
+      }
+      // [ and ] step through patients, unless someone is typing.
+      const typing = e.target.matches("textarea, input:not([type=checkbox])");
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "[" || e.key === "]")) {
+        e.preventDefault();
+        step(e.key === "[" ? -1 : 1);
       }
     });
   }
 
-  SH.drawer = { init, open, close, isOpen: () => Boolean(currentId) };
+  SH.drawer = { init, open, close, step, isOpen: () => Boolean(currentId), currentId: () => currentId };
 })();

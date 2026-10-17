@@ -57,6 +57,12 @@
   justify-content: space-between;
   margin-right: calc(var(--space-3) * -1);
 }
+.dh__actions { display: flex; align-items: center; gap: 2px; }
+.dh__pos { margin-right: var(--space-2); color: var(--color-ink-subtle); font-size: var(--text-xs); }
+.dh__sep { width: 1px; height: 1.25rem; margin: 0 var(--space-1); background: var(--color-border); }
+.icon-btn[aria-disabled="true"] { opacity: 0.4; cursor: default; }
+.icon-btn[aria-disabled="true"]:hover { background: transparent; color: var(--color-ink-muted); }
+.icon-btn[aria-disabled="true"]:active { transform: none; }
 .dh__eyebrow {
   display: flex;
   align-items: center;
@@ -399,3 +405,41 @@
   /* A zero-length transition can still carry a delay, so drop it too. */
   .task__input:checked + .task__box path { transition-delay: 0ms; }
 }
+
+/* ---------- Activity log ----------
+   A quiet timeline: icons sit on a hairline rail, newest at the top. */
+
+.activity { position: relative; }
+.activity::before {
+  content: "";
+  position: absolute;
+  top: var(--space-3);
+  bottom: var(--space-3);
+  left: calc(var(--icon-sm) / 2 + var(--space-2) - 0.5px);
+  width: 1px;
+  background: var(--color-border);
+}
+.act {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--icon-sm) + var(--space-4)) minmax(0, 1fr);
+  column-gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+.act__icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: calc(var(--icon-sm) + var(--space-4));
+  height: calc(var(--icon-sm) + var(--space-4));
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-border);
+  color: var(--color-ink-subtle);
+}
+.act--task-done .act__icon { color: var(--color-ok); }
+.act--concern .act__icon { color: var(--color-alert); }
+.act__text { font-size: var(--text-sm); line-height: var(--leading-snug); padding-top: 2px; }
+.act__text strong { font-weight: var(--weight-semibold); }
+.act__time { color: var(--color-ink-subtle); font-size: var(--text-xs); }
+.act__more { margin-top: var(--space-2); margin-left: calc(var(--icon-sm) + var(--space-6) - var(--space-3)); }

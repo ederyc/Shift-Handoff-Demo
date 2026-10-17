@@ -71,7 +71,7 @@
     "Pressure injury risk": "layers",
   };
 
-  const flagTag = (f) => `<li class="tag">${icon(FLAG_ICONS[f] || "flag", "icon tag__icon")}${esc(f)}</li>`;
+  const flagTag = (f) => `<li class="tag" title="${esc(f)}">${icon(FLAG_ICONS[f] || "flag", "icon tag__icon")}<span class="tag__text">${esc(f)}</span></li>`;
 
   SH.fmt = { esc, clock, ago, agoLabel, currentShift, minutesUntil, timeAgo, icon, acuity, vital, flagTag, ACUITY };
 })();

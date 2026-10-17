@@ -26,13 +26,16 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/drawer.css">
+  <link rel="stylesheet" href="css/overlays.css">
 
   <script src="js/data.js" defer></script>
   <script src="js/store.js" defer></script>
   <script src="js/format.js" defer></script>
   <script src="js/motion.js" defer></script>
   <script src="js/board.js" defer></script>
+  <script src="js/modal.js" defer></script>
   <script src="js/drawer.js" defer></script>
+  <script src="js/palette.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body>
@@ -53,6 +56,11 @@
       </div>
 
       <div class="appbar__tools">
+        <button type="button" class="search-trigger" id="open-palette" aria-keyshortcuts="/ Control+K">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>
+          <span class="search-trigger__label">Find patient</span>
+          <kbd aria-hidden="true">/</kbd>
+        </button>
         <p class="sync" id="sync-status" data-state="saved" role="status">
           <span class="sync__dot" aria-hidden="true"></span><span data-slot>All changes saved</span>
         </p>
@@ -60,6 +68,9 @@
         <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
           <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
           <span class="icon-btn__label">Night mode</span>
+        </button>
+        <button type="button" class="icon-btn" id="open-shortcuts" aria-keyshortcuts="?" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-keyboard"></use></svg>
         </button>
       </div>
     </div>
@@ -143,7 +154,17 @@
       <div class="roster__bar">
         <h2 id="roster-title" class="roster__title" tabindex="-1">Patients</h2>
         <p id="result-count" class="roster__count" role="status">Loading patients</p>
-        <button type="button" id="clear-filters" class="btn btn--ghost" hidden>Clear filters</button>
+        <div class="roster__tools">
+          <button type="button" id="clear-filters" class="btn btn--ghost" hidden>Clear filters</button>
+          <fieldset class="density" id="density">
+            <legend class="vh">Row density</legend>
+            <div class="segmented segmented--icons">
+              <span class="segmented__thumb" aria-hidden="true"></span>
+              <label title="Comfortable rows"><input type="radio" name="density" value="comfortable" checked><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-comfortable"></use></svg><span class="segmented__label">Comfortable</span></span></label>
+              <label title="Compact rows (D)"><input type="radio" name="density" value="compact"><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-compact"></use></svg><span class="segmented__label">Compact</span></span></label>
+            </div>
+          </fieldset>
+        </div>
       </div>
       <div id="roster"></div>
     </section>
@@ -162,6 +183,56 @@
       </section>
     </div>
   </footer>
+
+  <dialog id="palette" class="modal modal--palette" aria-label="Find patient">
+    <div class="modal__panel">
+      <div class="palette__field">
+        <svg class="icon icon--md" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>
+        <input id="palette-input" type="text" role="combobox" aria-label="Find patient by name or room"
+          aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" aria-activedescendant=""
+          autocomplete="off" spellcheck="false" placeholder="Name or room number">
+        <button type="button" class="palette__esc" data-close-modal aria-label="Close search"><kbd>Esc</kbd></button>
+      </div>
+      <ul id="palette-list" class="palette__list" role="listbox" aria-label="Patients"></ul>
+      <p class="palette__empty" hidden></p>
+      <p class="palette__foot" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd> to move <span class="palette__sep"></span> <kbd>Enter</kbd> to open</p>
+      <p class="vh" role="status" id="palette-status"></p>
+    </div>
+  </dialog>
+
+  <dialog id="shortcuts" class="modal" aria-labelledby="shortcuts-title">
+    <div class="modal__panel">
+      <header class="modal__head">
+        <h2 id="shortcuts-title" class="modal__title">Keyboard shortcuts</h2>
+        <button type="button" class="icon-btn" data-close-modal aria-label="Close shortcuts">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="modal__body">
+        <section aria-labelledby="keys-board">
+          <h3 id="keys-board" class="overline">Board</h3>
+          <dl class="keys">
+            <div><dt><kbd>↑</kbd><kbd>↓</kbd> <span>or</span> <kbd>J</kbd><kbd>K</kbd></dt><dd>Move between patients</dd></div>
+            <div><dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>First or last patient</dd></div>
+            <div><dt><kbd>Enter</kbd></dt><dd>Open patient details</dd></div>
+            <div><dt><kbd>/</kbd> <span>or</span> <kbd>Ctrl</kbd><kbd>K</kbd></dt><dd>Find a patient</dd></div>
+            <div><dt><kbd>A</kbd></dt><dd>Toggle "Needs attention" filter</dd></div>
+            <div><dt><kbd>D</kbd></dt><dd>Toggle compact rows</dd></div>
+            <div><dt><kbd>?</kbd></dt><dd>Show this list</dd></div>
+          </dl>
+        </section>
+        <section aria-labelledby="keys-drawer">
+          <h3 id="keys-drawer" class="overline">Patient details</h3>
+          <dl class="keys">
+            <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous or next patient</dd></div>
+            <div><dt><kbd>Space</kbd></dt><dd>Check off the focused task</dd></div>
+            <div><dt><kbd>Ctrl</kbd><kbd>Enter</kbd></dt><dd>Save handoff note</dd></div>
+            <div><dt><kbd>Esc</kbd></dt><dd>Close</dd></div>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="drawer" class="drawer" aria-labelledby="drawer-title">
     <div class="drawer__panel" id="drawer-panel"></div>
@@ -198,6 +269,14 @@
       <symbol id="i-exit" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M13 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H13"/><path vector-effect="non-scaling-stroke" d="M10.5 12h9M16.25 8.5 19.75 12l-3.5 3.5"/></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M2.75 12S6 5.75 12 5.75 21.25 12 21.25 12 18 18.25 12 18.25 2.75 12 2.75 12Z"/><circle vector-effect="non-scaling-stroke" cx="12" cy="12" r="3"/></symbol>
       <symbol id="i-layers" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M12 4 3.75 8.25 12 12.5l8.25-4.25L12 4Z"/><path vector-effect="non-scaling-stroke" d="M3.75 12.25 12 16.5l8.25-4.25"/><path vector-effect="non-scaling-stroke" d="M3.75 16.25 12 20.5l8.25-4.25"/></symbol>
+      <symbol id="i-chevron-up" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M6.5 14.5 12 9l5.5 5.5"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M6.5 9.5 12 15l5.5-5.5"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle vector-effect="non-scaling-stroke" cx="10.5" cy="10.5" r="6.25"/><path vector-effect="non-scaling-stroke" d="M15.25 15.25 20 20"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect vector-effect="non-scaling-stroke" x="2.75" y="6" width="18.5" height="12" rx="2"/><path vector-effect="non-scaling-stroke" d="M6.75 10h.5M10.25 10h.5M13.75 10h.5M17.25 10h.5M8 14.25h8"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M4.75 12a7.25 7.25 0 1 0 2.1-5.1"/><path vector-effect="non-scaling-stroke" d="M4.5 4.5v3.25h3.25"/><path vector-effect="non-scaling-stroke" d="M12 8.25V12l2.75 1.75"/></symbol>
+      <symbol id="i-rows-comfortable" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+      <symbol id="i-rows-compact" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M4 5h16M4 9.67h16M4 14.33h16M4 19h16"/></symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24"><path vector-effect="non-scaling-stroke" d="M9 7.5 5 11.5l4 4"/><path vector-effect="non-scaling-stroke" d="M5 11.5h9.5a4.5 4.5 0 0 1 0 9H12"/></symbol>
     </defs>
   </svg>
 </body>

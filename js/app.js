@@ -1,6 +1,7 @@
 /*
-  Wires everything together: filters, sorting, the census strip, the
-  sync indicator, demo controls and the night mode toggle.
+  Wires everything together: filters, sorting, density, keyboard navigation
+  and shortcuts, the census strip, the sync indicator, demo controls and
+  the night mode toggle.
 */
 (function () {
   const SH = (window.SH = window.SH || {});
@@ -15,6 +16,13 @@
 
   let loading = true;
   let hasRendered = false;
+  let visibleIds = [];
+  let activeRowId = null; // the one row in the Tab order (roving tabindex)
+
+  const storage = {
+    get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* not critical */ } },
+  };
 
   /* ---------- Filters and sort ---------- */
 
@@ -68,6 +76,16 @@
     stale: (a, b) => a.updatedAt - b.updatedAt,
   };
 
+  const sorted = (list, f, now = Date.now()) => list.slice().sort((a, b) => SORTS[f.sort](a, b, now));
+
+  /* Board order for the palette and for drawer next/previous. */
+  const boardOrder = () => visibleIds.slice();
+  function navOrder(id) {
+    // A patient opened from search may be filtered out of the board: then walk the whole unit.
+    if (visibleIds.includes(id)) return visibleIds.slice();
+    return sorted(store.patients(), readFilters()).map((p) => p.id);
+  }
+
   /* ---------- Rendering ---------- */
 
   function renderCensus(patients, now) {
@@ -110,6 +128,7 @@
     $("#census").classList.toggle("is-loading", loading);
 
     if (loading) {
+      visibleIds = [];
       rosterEl.setAttribute("aria-busy", "true");
       rosterEl.innerHTML = SH.board.loading();
       countEl.textContent = "Loading patients";
@@ -118,16 +137,21 @@
     rosterEl.removeAttribute("aria-busy");
 
     if (!all.length) {
+      visibleIds = [];
       rosterEl.innerHTML = SH.board.emptyUnit();
       countEl.textContent = "No patients assigned";
       SH.motion.fadeUp(rosterEl.querySelector(".empty"));
       return;
     }
 
-    const shown = all.filter((p) => matches(p, f, now)).sort((a, b) => SORTS[f.sort](a, b, now));
+    const shown = sorted(all.filter((p) => matches(p, f, now)), f, now);
+    visibleIds = shown.map((p) => p.id);
     countEl.textContent = shown.length === all.length
       ? `Showing all ${all.length} patients`
       : `Showing ${shown.length} of ${all.length} patients`;
+
+    // If a row had focus, it gets it back after the re-render (or the nearest row does).
+    const focusedId = document.activeElement?.closest?.("#roster .row")?.dataset.id;
 
     // FLIP: measure rows, swap the markup, then let rows glide to their new spots.
     const before = SH.motion.snapshot(rosterEl, ".row[data-id]");
@@ -136,12 +160,104 @@
     if (shown.length) SH.motion.flip(rosterEl, ".row[data-id]", before);
     else if (!hadNoMatches) SH.motion.fadeUp(rosterEl.querySelector(".empty"));
     hasRendered = true;
+
+    applyRoving();
+    if (focusedId) {
+      if (visibleIds.includes(focusedId)) focusRow(focusedId);
+      else (rowButtons()[0] || $("#roster-title")).focus();
+    }
   }
 
-  /* After the drawer closes, put focus back on that patient's row if it's still listed. */
+  /* ---------- Roving focus in the list ---------- */
+
+  const rowButtons = () => [...rosterEl.querySelectorAll(".who__name")];
+
+  /* Only one row is in the Tab order. Arrow keys move between rows from there. */
+  function applyRoving() {
+    const buttons = rowButtons();
+    if (!buttons.length) return;
+    if (!visibleIds.includes(activeRowId)) activeRowId = visibleIds[0];
+    buttons.forEach((b) => (b.tabIndex = b.dataset.open === activeRowId ? 0 : -1));
+  }
+
   function focusRow(id) {
     const btn = rosterEl.querySelector(`[data-open="${id}"]`);
-    (btn || $("#roster-title")).focus();
+    if (btn) {
+      activeRowId = id;
+      applyRoving();
+      btn.focus();
+    } else {
+      $("#roster-title").focus();
+    }
+  }
+
+  function moveRow(from, to) {
+    const buttons = rowButtons();
+    if (!buttons.length) return;
+    const i = buttons.findIndex((b) => b.dataset.open === from);
+    const target = to === "first" ? 0 : to === "last" ? buttons.length - 1 : Math.max(0, Math.min(buttons.length - 1, i + to));
+    focusRow(buttons[target].dataset.open);
+    buttons[target].closest(".row").scrollIntoView({ block: "nearest" });
+  }
+
+  const ROW_KEYS = { ArrowDown: 1, j: 1, ArrowUp: -1, k: -1, Home: "first", End: "last" };
+
+  function onRosterKey(e) {
+    if (!e.target.matches(".who__name") || e.ctrlKey || e.metaKey || e.altKey) return;
+    const move = ROW_KEYS[e.key];
+    if (move === undefined) return;
+    e.preventDefault();
+    moveRow(e.target.dataset.open, move);
+  }
+
+  /* ---------- Density ---------- */
+
+  function setDensity(value, { animate = true } = {}) {
+    const before = animate ? SH.motion.snapshot(rosterEl, ".row[data-id]") : new Map();
+    document.documentElement.dataset.density = value;
+    const radio = $(`input[name="density"][value="${value}"]`);
+    if (radio) radio.checked = true;
+    placeThumbs();
+    storage.set("steadyhand:density", value);
+    if (animate) SH.motion.flip(rosterEl, ".row[data-id]", before);
+  }
+
+  const toggleDensity = () =>
+    setDensity(document.documentElement.dataset.density === "compact" ? "comfortable" : "compact");
+
+  /* ---------- Global shortcuts ---------- */
+
+  function onGlobalKey(e) {
+    if (e.defaultPrevented || document.querySelector("dialog[open]")) return;
+    const typing = e.target.closest("input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]");
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      return SH.palette.open();
+    }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || loading) return;
+
+    switch (e.key) {
+      case "/":
+        e.preventDefault();
+        return SH.palette.open();
+      case "?":
+        e.preventDefault();
+        return SH.modal.open($("#shortcuts"), { focus: "[data-close-modal]" });
+      case "a":
+        e.preventDefault();
+        return filtersForm.querySelector('input[name="attention"]').click();
+      case "d":
+        e.preventDefault();
+        return toggleDensity();
+      case "j":
+      case "k":
+        // From anywhere on the page, J/K drop you into the list.
+        if (!e.target.matches(".who__name") && visibleIds.length) {
+          e.preventDefault();
+          focusRow(activeRowId || visibleIds[0]);
+        }
+    }
   }
 
   /* ---------- Sync indicator ---------- */
@@ -188,35 +304,35 @@
     btn.addEventListener("click", () => {
       const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = next;
-      try {
-        localStorage.setItem("steadyhand:theme", next);
-      } catch (e) {}
+      storage.set("steadyhand:theme", next);
       sync();
       SH.motion.animate(btn.querySelector("svg"), [{ transform: "rotate(-90deg) scale(0.6)", opacity: 0 }, { transform: "none", opacity: 1 }]);
     });
     sync();
   }
 
-  /* ---------- Segmented control thumb ---------- */
+  /* ---------- Segmented control thumbs ---------- */
 
-  const segmented = $(".segmented");
-  const thumb = segmented.querySelector(".segmented__thumb");
+  const segmentedControls = [...document.querySelectorAll(".segmented")];
 
-  function placeThumb() {
-    const face = segmented.querySelector("input:checked + span");
-    if (!face) return;
-    const track = segmented.getBoundingClientRect();
+  function placeThumb(seg) {
+    const face = seg.querySelector("input:checked + span");
+    const thumb = seg.querySelector(".segmented__thumb");
+    if (!face || !thumb) return;
+    const track = seg.getBoundingClientRect();
     const rect = face.getBoundingClientRect();
     thumb.style.width = `${rect.width}px`;
-    thumb.style.transform = `translateX(${rect.left - track.left - segmented.clientLeft}px)`;
+    thumb.style.transform = `translateX(${rect.left - track.left - seg.clientLeft}px)`;
   }
+  const placeThumbs = () => segmentedControls.forEach(placeThumb);
 
-  function initThumb() {
-    placeThumb();
-    // Only animate once it's in place, so the first paint doesn't slide in from the left.
-    requestAnimationFrame(() => thumb.classList.add("is-ready"));
-    new ResizeObserver(placeThumb).observe(segmented);
-    document.fonts?.ready.then(placeThumb);
+  function initThumbs() {
+    placeThumbs();
+    // Only animate once in place, so the first paint doesn't slide in from the left.
+    requestAnimationFrame(() => segmentedControls.forEach((s) => s.querySelector(".segmented__thumb")?.classList.add("is-ready")));
+    const ro = new ResizeObserver(placeThumbs);
+    segmentedControls.forEach((s) => ro.observe(s));
+    document.fonts?.ready.then(placeThumbs);
   }
 
   /* ---------- Events ---------- */
@@ -225,36 +341,54 @@
     filtersForm.querySelectorAll('input[type="checkbox"]').forEach((el) => (el.checked = false));
     filtersForm.querySelector('input[name="tasks"][value="any"]').checked = true;
     filtersForm.querySelector("#sort").value = DEFAULT_SORT;
-    placeThumb();
+    placeThumbs();
     render();
   }
 
   function init() {
     store.load();
     SH.drawer.init();
+    SH.palette.init();
+    SH.modal.wire($("#shortcuts"));
+
     const shift = currentShift();
     $("#shift-label").textContent = `${shift.name} shift`;
     $("#shift-since").textContent = `since ${shift.start}`;
     $("#shift-icon").setAttribute("href", shift.name === "Day" ? "#i-sun" : "#i-moon");
     initTheme();
-
-    initThumb();
+    setDensity(storage.get("steadyhand:density") === "compact" ? "compact" : "comfortable", { animate: false });
+    initThumbs();
 
     // "input" fires on every checkbox, radio and select change: the list updates instantly.
     filtersForm.addEventListener("input", (e) => {
-      if (e.target.name === "tasks") placeThumb();
+      if (e.target.name === "tasks") placeThumbs();
       render();
     });
     filtersForm.addEventListener("submit", (e) => e.preventDefault());
+    $("#density").addEventListener("change", (e) => setDensity(e.target.value));
 
     clearBtn.addEventListener("click", () => {
       clearFilters();
       $("#roster-title").focus();
     });
 
+    $("#open-palette").addEventListener("click", () => SH.palette.open());
+    $("#open-shortcuts").addEventListener("click", () => SH.modal.open($("#shortcuts"), { focus: "[data-close-modal]" }));
+
+    rosterEl.addEventListener("keydown", onRosterKey);
+    rosterEl.addEventListener("focusin", (e) => {
+      if (e.target.matches(".who__name") && e.target.dataset.open !== activeRowId) {
+        activeRowId = e.target.dataset.open;
+        applyRoving();
+      }
+    });
     rosterEl.addEventListener("click", (e) => {
       const opener = e.target.closest("[data-open]");
-      if (opener) return SH.drawer.open(opener.dataset.open);
+      if (opener) {
+        activeRowId = opener.dataset.open;
+        applyRoving();
+        return SH.drawer.open(opener.dataset.open);
+      }
       const action = e.target.closest("[data-action]")?.dataset.action;
       if (action === "clear-filters") {
         clearFilters();
@@ -266,6 +400,7 @@
         $("#roster-title").focus();
       }
     });
+    document.addEventListener("keydown", onGlobalKey);
 
     $("#demo-controls").addEventListener("click", (e) => {
       const action = e.target.closest("[data-demo]")?.dataset.demo;
@@ -303,6 +438,6 @@
     }
   }
 
-  SH.app = { focusRow };
+  SH.app = { focusRow, boardOrder, navOrder };
   init();
 })();

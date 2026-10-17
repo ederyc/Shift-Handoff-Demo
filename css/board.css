@@ -14,7 +14,14 @@
   letter-spacing: var(--tracking-tight);
 }
 .roster__count { color: var(--color-ink-subtle); font-size: var(--text-sm); }
-#clear-filters { margin-left: auto; align-self: center; }
+.roster__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+  align-self: center;
+}
+.density { margin: 0; padding: 0; border: 0; min-width: 0; }
 
 .table-wrap {
   background: var(--color-surface);
@@ -385,4 +392,33 @@
   .c-updated { grid-area: updated; text-align: right; align-self: end; }
   .tcell__count { display: inline; }
   .c-tasks .sk + .sk { margin-top: 0; }
+}
+
+/* ---------- Compact density ----------
+   For when the list is long and the user knows it well. Less padding, and the
+   note preview steps out of the way (it's the least time-critical line; the
+   full note is one click away). Needs attention never hides. */
+
+[data-density="compact"] .roster-table tbody td,
+[data-density="compact"] .roster-table tbody th { padding-block: var(--space-2); }
+/* The whole row is the tap target, so compact never drops below 44px (a cell's height acts as a minimum). */
+[data-density="compact"] .roster-table tbody th { height: calc(var(--tap) + 1px); }
+[data-density="compact"] .preview { display: none; }
+[data-density="compact"] .attn { margin-top: 2px; }
+/* Cells stay table cells (display: flex on a <td> breaks the table), so the inline layout goes on their contents. */
+[data-density="compact"] .c-ind .kvs,
+[data-density="compact"] .c-ind .tags { display: inline-flex; vertical-align: middle; }
+[data-density="compact"] .c-ind .tags { margin: 0 0 0 var(--space-2); }
+/* Compact flags go icon-only (name kept for screen readers and as a tooltip): the
+   per-flag glyphs exist so a row can be scanned by shape. */
+[data-density="compact"] .c-ind .tag { padding: 2px 5px; }
+[data-density="compact"] .c-ind .tag__text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+[data-density="compact"] .tcell__next { display: none; }
+[data-density="compact"] .tcell__count { display: inline; margin-right: var(--space-2); font-size: var(--text-sm); }
+[data-density="compact"] .c-room,
+[data-density="compact"] .who__name { font-size: var(--text-base); }
+
+@media (max-width: 52rem) {
+  [data-density="compact"] .row { padding-block: var(--space-2); gap: var(--space-1) var(--space-3); }
+  .segmented__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }

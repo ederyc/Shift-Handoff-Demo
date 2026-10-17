@@ -9,7 +9,8 @@
   const SH = (window.SH = window.SH || {});
 
   const KEY = "steadyhand:v1";
-  const VERSION = 1;
+  // Bumped when the saved shape changes, so old saves reseed instead of breaking.
+  const VERSION = 2;
   // After 12 hours the demo starts a fresh shift, so timestamps never go stale.
   const SHIFT_MS = 12 * 60 * 60 * 1000;
   const MIN = 60 * 1000;
@@ -19,8 +20,42 @@
 
   /* ---------- Seeding ---------- */
 
+  /*
+    The activity log is append-only, like a real audit trail: reopening a
+    task adds a "reopened" entry rather than erasing the "checked off" one.
+    The seed version is built from what the data already implies happened.
+  */
+  function seedActivity(seed, id, now, tasks, notes) {
+    const log = [];
+    const at = (min) => now - min * MIN;
+    log.push({ kind: "vitals", at: at(seed.vitals.minutesAgo), who: SH.SEED.vitalsBy, text: "recorded vitals" });
+    if (seed.concern) {
+      log.push({ kind: "concern", at: at(seed.updatedMinutesAgo + 5), who: SH.SEED.nightRn, text: `raised a concern: ${seed.concern}` });
+    }
+    notes.forEach((n) => log.push({ kind: "note", at: n.createdAt, who: n.author, text: "added a handoff note" }));
+    tasks.filter((t) => t.done).forEach((t) => log.push({ kind: "task-done", at: t.doneAt, who: t.doneBy, text: `checked off ${t.label}` }));
+    return log
+      .sort((a, b) => b.at - a.at)
+      .map((e, i) => ({ id: `${id}-a${i}`, ...e }));
+  }
+
   function hydrate(seed, now) {
     const id = "p" + seed.room;
+    const tasks = seed.tasks.map((t, i) => ({
+      id: `${id}-t${i}`,
+      label: t.label,
+      dueAt: t.done ? null : now + t.dueIn * MIN,
+      done: Boolean(t.done),
+      doneAt: t.done ? now - t.doneMinutesAgo * MIN : null,
+      doneBy: t.done ? SH.SEED.nightRn : null,
+    }));
+    const notes = seed.notes.map((n, i) => ({
+      id: `${id}-n${i}`,
+      text: n.text,
+      author: n.author,
+      shift: n.shift,
+      createdAt: now - n.minutesAgo * MIN,
+    }));
     return {
       id,
       room: seed.room,
@@ -31,21 +66,9 @@
       concern: seed.concern,
       updatedAt: now - seed.updatedMinutesAgo * MIN,
       vitals: { ...seed.vitals, takenAt: now - seed.vitals.minutesAgo * MIN },
-      tasks: seed.tasks.map((t, i) => ({
-        id: `${id}-t${i}`,
-        label: t.label,
-        dueAt: t.done ? null : now + t.dueIn * MIN,
-        done: Boolean(t.done),
-        doneAt: t.done ? now - t.doneMinutesAgo * MIN : null,
-        doneBy: t.done ? "Night shift" : null,
-      })),
-      notes: seed.notes.map((n, i) => ({
-        id: `${id}-n${i}`,
-        text: n.text,
-        author: n.author,
-        shift: n.shift,
-        createdAt: now - n.minutesAgo * MIN,
-      })),
+      tasks,
+      notes,
+      activity: seedActivity(seed, id, now, tasks, notes),
     };
   }
 
@@ -91,6 +114,10 @@
   }
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function log(p, kind, text) {
+    p.activity.unshift({ id: `${p.id}-a${Date.now()}${p.activity.length}`, kind, at: Date.now(), who: SH.SEED.currentUser, text });
+  }
 
   /* ---------- Derived values ---------- */
 
@@ -158,6 +185,7 @@
       t.doneAt = done ? Date.now() : null;
       t.doneBy = done ? SH.SEED.currentUser : null;
       p.updatedAt = Date.now();
+      log(p, done ? "task-done" : "task-reopened", `${done ? "checked off" : "reopened"} ${t.label}`);
       commit();
       return wait(380);
     },
@@ -175,6 +203,7 @@
       };
       p.notes.unshift(note);
       p.updatedAt = note.createdAt;
+      log(p, "note", "added a handoff note");
       commit();
       return note;
     },

@@ -19,6 +19,8 @@
     hospital: "Harbor Point General",
     unit: "4 West Med-Surg",
     currentUser: "S. Rivera, RN",
+    nightRn: NIGHT_RN.author,
+    vitalsBy: NIGHT_CNA.author,
 
     patients: [
       {
