@@ -23,6 +23,9 @@
 }
 .density { margin: 0; padding: 0; border: 0; min-width: 0; }
 
+/* Before the first render, hold the space the board is about to fill, so nothing below it jumps. */
+#roster:empty { min-height: 36rem; }
+
 .table-wrap {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

@@ -18,9 +18,8 @@
     })();
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <!-- Self-hosted type: one variable font file covers 400 to 600, no third-party request. -->
+  <link rel="preload" href="fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
 
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
@@ -84,9 +83,18 @@
           <span id="shift-label">Day shift</span>
           <span class="shift-chip__since" id="shift-since">since 07:00</span>
         </p>
+        <script>
+          /* Set the shift before first paint, so the label never flashes the wrong one. */
+          (function () {
+            var h = new Date().getHours(), day = h >= 7 && h < 19;
+            document.getElementById("shift-label").textContent = day ? "Day shift" : "Night shift";
+            document.getElementById("shift-since").textContent = day ? "since 07:00" : "since 19:00";
+            document.getElementById("shift-icon").setAttribute("href", day ? "#i-sun" : "#i-moon");
+          })();
+        </script>
         <h1 class="board-head__title">4 West Med-Surg</h1>
       </div>
-      <dl class="census" id="census" aria-label="Unit at a glance">
+      <dl class="census is-loading" id="census" aria-label="Unit at a glance">
         <div class="census__item">
           <dt>Patients</dt>
           <dd id="census-patients">0</dd>
@@ -108,7 +116,7 @@
 
     <section class="controls" aria-labelledby="controls-title">
       <h2 id="controls-title" class="vh">Filter and sort</h2>
-      <form id="filters" class="filters">
+      <form id="filters" class="filters" inert>
         <fieldset class="filters__group">
           <legend>Acuity</legend>
           <div class="chips">

@@ -6,7 +6,7 @@
 (function () {
   const SH = (window.SH = window.SH || {});
   const store = SH.store;
-  const { agoLabel, currentShift } = SH.fmt;
+  const { agoLabel } = SH.fmt;
 
   const $ = (sel) => document.querySelector(sel);
   const rosterEl = $("#roster");
@@ -351,10 +351,7 @@
     SH.palette.init();
     SH.modal.wire($("#shortcuts"));
 
-    const shift = currentShift();
-    $("#shift-label").textContent = `${shift.name} shift`;
-    $("#shift-since").textContent = `since ${shift.start}`;
-    $("#shift-icon").setAttribute("href", shift.name === "Day" ? "#i-sun" : "#i-moon");
+    // The shift label is set inline in index.html, before first paint.
     initTheme();
     setDensity(storage.get("steadyhand:density") === "compact" ? "compact" : "comfortable", { animate: false });
     initThumbs();
