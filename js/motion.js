@@ -19,11 +19,33 @@
     return el.animate(keyframes, { duration: ms(dur), easing: token(ease), delay, fill: "backwards" });
   }
 
+  /*
+    Position in layout space (summed offsets). Unlike getBoundingClientRect it
+    ignores ancestor transforms, so FLIP stays exact inside the tilted desktop
+    window. The element's own in-flight translate is added back, so a reorder
+    that interrupts another one redirects smoothly instead of jumping.
+  */
+  function layoutPos(el) {
+    let left = 0;
+    let top = 0;
+    for (let n = el; n; n = n.offsetParent) {
+      left += n.offsetLeft;
+      top += n.offsetTop;
+    }
+    const t = getComputedStyle(el).transform;
+    if (t && t !== "none") {
+      const m = new DOMMatrixReadOnly(t);
+      left += m.e;
+      top += m.f;
+    }
+    return { left, top };
+  }
+
   /* FLIP, step one: remember where every keyed element is right now. */
   function snapshot(container, selector) {
     const rects = new Map();
     if (reduced()) return rects;
-    container.querySelectorAll(selector).forEach((el) => rects.set(el.dataset.id, el.getBoundingClientRect()));
+    container.querySelectorAll(selector).forEach((el) => rects.set(el.dataset.id, layoutPos(el)));
     return rects;
   }
 
@@ -39,7 +61,7 @@
     container.querySelectorAll(selector).forEach((el) => {
       const prev = before.get(el.dataset.id);
       if (prev) {
-        const now = el.getBoundingClientRect();
+        const now = layoutPos(el);
         const dx = prev.left - now.left;
         const dy = prev.top - now.top;
         if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;

@@ -1,0 +1,210 @@
+/*
+  Desktop shell: the app lives in a floating window on a branded backdrop.
+
+  Mobile-first on purpose. By default (small screens, short screens, or if
+  this file fails to load) the wrapper elements step aside with
+  display: contents and the app fills the screen exactly as before. The
+  window only exists inside the media query below.
+*/
+
+.backdrop,
+.desk-brand,
+.window__titlebar { display: none; }
+
+.desk,
+.window--main,
+.window__body { display: contents; }
+
+/*
+  The breakpoint is where the frame stops costing the app anything. The
+  board's desktop layout needs a window about 1260px wide to sit without any
+  wrapping (filters and sort on one row, appbar on one line, names on one
+  line). With margins at 3.75% a side, that's a 1360px viewport, so common
+  1366px laptops get the window and anything narrower gets the plain app.
+  Short screens skip it too: a title bar and margins on a 600px-tall screen
+  eat a third of the board.
+*/
+@media (min-width: 85rem) and (min-height: 40rem) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+  html { scrollbar-gutter: auto; }
+  body {
+    display: block;
+    background: var(--backdrop-base);
+  }
+
+  /* Soft color fields from the app's own hues. Radial gradients, not blur
+     filters: same softness, nothing for the browser to re-blur. */
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(40rem 34rem at -4% 102%, var(--backdrop-blob-teal), transparent 70%),
+      radial-gradient(42rem 30rem at 100% -6%, var(--backdrop-blob-blue), transparent 70%),
+      radial-gradient(26rem 30rem at 104% 78%, var(--backdrop-blob-green), transparent 70%),
+      radial-gradient(22rem 16rem at 34% -4%, var(--backdrop-blob-teal), transparent 72%),
+      linear-gradient(160deg, var(--backdrop-base) 0%, var(--backdrop-base-end) 100%);
+  }
+
+  /* Wordmark: sits on the backdrop, not in the window. */
+  .desk-brand {
+    position: fixed;
+    top: 1.75rem;
+    left: var(--desk-pad-x);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .desk-brand__mark { width: 2.25rem; height: 2.25rem; }
+  .desk-brand__mark rect { fill: var(--color-accent); }
+  .desk-brand__mark path {
+    fill: none;
+    stroke: var(--color-on-accent);
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .desk-brand__name {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-display);
+  }
+  .desk-brand__tag {
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--window-edge);
+    /* Full ink, not muted: it can sit over the teal field, where muted gray
+       dips under AA. Size alone keeps it secondary to the name. */
+    color: var(--color-ink);
+    font-size: var(--text-sm);
+  }
+
+  /* The desk holds the window and owns the perspective (the vanishing point). */
+  .desk {
+    display: block;
+    position: fixed;
+    inset: 0;
+    perspective: var(--window-perspective);
+    perspective-origin: 50% 40%;
+    pointer-events: none;
+  }
+
+  .window {
+    position: absolute;
+    top: var(--desk-top);
+    bottom: var(--desk-bottom);
+    left: 0;
+    right: 0;
+    width: min(var(--window-max), 100vw - 2 * var(--desk-pad-x));
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--window-edge);
+    border-radius: var(--window-radius);
+    overflow: hidden;
+    transform: rotateX(var(--window-tilt-x)) rotateY(var(--window-tilt-y));
+    pointer-events: auto;
+  }
+
+  .window--main {
+    z-index: 2;
+    /* Drag offset, set by js/shell.js. A separate property from transform,
+       so moving the window never fights the tilt or the lift. */
+    translate: var(--drag-x, 0px) var(--drag-y, 0px);
+    background: var(--color-canvas);
+    box-shadow: var(--shadow-window);
+    transition:
+      transform var(--dur-slow) var(--ease-settle),
+      box-shadow var(--dur-slow) var(--ease-settle);
+  }
+
+  /*
+    The tilt is for the window at rest. Text on a 3D-transformed layer renders
+    noticeably softer, so the moment someone works in the window (pointer over
+    it, or keyboard focus inside) it comes forward and lies flat. js/shell.js
+    sets .is-engaged with a little hysteresis so the edge never flickers.
+  */
+  .window--main.is-engaged,
+  .window--main:focus-within { transform: none; }
+
+  /* Dragging: picked up. Position follows the pointer 1:1 (translate is
+     never transitioned); only the lift animates, and quickly. */
+  .window--main.is-dragging {
+    transform: scale(var(--lift-scale));
+    box-shadow: var(--shadow-window-lifted);
+    transition-duration: var(--dur-fast);
+  }
+
+  /* Released: the lift settles on the spring curve, so it overshoots past
+     rest by a hair and lands. With reduced motion --dur-land is 0: instant. */
+  .window--main.is-landing {
+    transition:
+      transform var(--dur-land) var(--ease-spring),
+      box-shadow var(--dur-land) var(--ease-settle);
+  }
+
+  .window__titlebar {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    height: var(--window-titlebar);
+    padding: 0 var(--space-4);
+    background: var(--window-chrome);
+    border-bottom: 1px solid var(--color-border);
+    user-select: none;
+    /* The title bar is the drag handle. touch-action: none lets a finger drag
+       it without the browser treating the gesture as a scroll. */
+    cursor: grab;
+    touch-action: none;
+  }
+  .is-dragging .window__titlebar { cursor: grabbing; }
+
+  /* Neutral dots, not red/amber/green: red means one thing in this system. */
+  .window__lights { display: flex; gap: 7px; }
+  .window__lights i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--color-border-strong);
+  }
+
+  .window__title {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+  .window__icon { width: var(--icon-sm); height: var(--icon-sm); }
+  .window__icon rect { fill: var(--color-accent); }
+  .window__icon path {
+    fill: none;
+    stroke: var(--color-on-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* The app scrolls in here; the page itself never does. */
+  .window__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+    background: var(--color-canvas);
+  }
+}

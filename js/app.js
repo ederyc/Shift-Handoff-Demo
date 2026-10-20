@@ -315,14 +315,15 @@
 
   const segmentedControls = [...document.querySelectorAll(".segmented")];
 
+  /* Layout offsets, not screen rectangles: on the tilted desktop window, screen
+     rectangles are perspective-distorted and the pill would land off target. */
   function placeThumb(seg) {
     const face = seg.querySelector("input:checked + span");
     const thumb = seg.querySelector(".segmented__thumb");
     if (!face || !thumb) return;
-    const track = seg.getBoundingClientRect();
-    const rect = face.getBoundingClientRect();
-    thumb.style.width = `${rect.width}px`;
-    thumb.style.transform = `translateX(${rect.left - track.left - seg.clientLeft}px)`;
+    const label = face.parentElement;
+    thumb.style.width = `${face.offsetWidth}px`;
+    thumb.style.transform = `translateX(${label.offsetLeft + face.offsetLeft}px)`;
   }
   const placeThumbs = () => segmentedControls.forEach(placeThumb);
 

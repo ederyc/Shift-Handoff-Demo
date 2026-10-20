@@ -126,6 +126,35 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --press-scale: 0.97;
   --press-scale-strong: 0.9;
+  /* The one springy curve, kept for one moment: a dragged window landing.
+     It overshoots, so the window dips just past rest and settles. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-land: 360ms;
+  --lift-scale: 1.012;
+
+  /* Desktop shell (css/shell.css). The backdrop mixes the app's own hues into a
+     "paper" color: white by day for an airy wash, near-black by night. */
+  --backdrop-paper: #ffffff;
+  --mix-blob: 44%;
+  --mix-blob-soft: 30%;
+  --shadow-window:
+    22px 30px 64px -12px rgb(12 42 52 / 0.28),
+    6px 10px 20px -8px rgb(12 42 52 / 0.16);
+  /* Picked up: the shadow drops further and softens, as if the window rose off the desk. */
+  --shadow-window-lifted:
+    30px 44px 90px -14px rgb(12 42 52 / 0.32),
+    8px 14px 28px -10px rgb(12 42 52 / 0.18);
+
+  --window-radius: 14px;
+  --window-titlebar: 2.5rem;
+  --window-max: 90rem;
+  --window-perspective: 2600px;
+  /* Right edge and bottom edge lean toward the viewer, so the shadow falls down and right. */
+  --window-tilt-x: 2.5deg;
+  --window-tilt-y: -3.5deg;
+  --desk-pad-x: clamp(2rem, 3.75vw, 8rem);
+  --desk-top: 6rem;
+  --desk-bottom: 2.5rem;
 }
 
 /* Night mode: lower overall luminance for dark units, same meaning per color. */
@@ -164,6 +193,16 @@
 
   --shadow-sm: none;
   --shadow-drawer: -12px 0 40px rgb(0 0 0 / 0.5), -1px 0 0 #27333e;
+
+  --backdrop-paper: #070c11;
+  --mix-blob: 40%;
+  --mix-blob-soft: 30%;
+  --shadow-window:
+    24px 32px 70px -10px rgb(0 0 0 / 0.65),
+    6px 10px 22px -6px rgb(0 0 0 / 0.45);
+  --shadow-window-lifted:
+    34px 48px 96px -12px rgb(0 0 0 / 0.7),
+    8px 14px 30px -8px rgb(0 0 0 / 0.5);
 }
 
 /* Derived fills. Declared once, recomputed per theme from the hues above. */
@@ -180,6 +219,15 @@
 
   --color-ok-soft: color-mix(in oklab, var(--color-ok) var(--mix-soft), var(--color-surface));
 
+  /* Backdrop: the same hues as the app, washed into the theme's paper color. */
+  --backdrop-base: color-mix(in oklab, var(--color-accent) 6%, var(--backdrop-paper));
+  --backdrop-base-end: color-mix(in oklab, var(--color-focus) 8%, var(--backdrop-paper));
+  --backdrop-blob-teal: color-mix(in oklab, var(--color-accent) var(--mix-blob), var(--backdrop-paper));
+  --backdrop-blob-blue: color-mix(in oklab, var(--color-focus) var(--mix-blob-soft), var(--backdrop-paper));
+  --backdrop-blob-green: color-mix(in oklab, var(--color-ok) var(--mix-blob-soft), var(--backdrop-paper));
+  --window-edge: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --window-chrome: color-mix(in oklab, var(--color-surface-sunken) 70%, var(--color-surface));
+
   /* Skeletons are ink at low strength, so they sit right in either theme. */
   --color-skeleton: color-mix(in oklab, var(--color-ink) 8%, var(--color-surface));
   --color-skeleton-shine: color-mix(in oklab, var(--color-ink) 3%, var(--color-surface));
@@ -192,5 +240,7 @@
     --dur-slow: 0ms;
     --press-scale: 1;
     --press-scale-strong: 1;
+    --dur-land: 0ms;
+    --lift-scale: 1;
   }
 }

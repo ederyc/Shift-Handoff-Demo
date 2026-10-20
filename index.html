@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="css/board.css">
   <link rel="stylesheet" href="css/drawer.css">
   <link rel="stylesheet" href="css/overlays.css">
+  <link rel="stylesheet" href="css/shell.css">
 
   <script src="js/data.js" defer></script>
   <script src="js/store.js" defer></script>
@@ -36,161 +37,186 @@
   <script src="js/drawer.js" defer></script>
   <script src="js/palette.js" defer></script>
   <script src="js/app.js" defer></script>
+  <script src="js/shell.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#roster-title">Skip to patient list</a>
 
-  <p class="demo-strip">Concept demo with fictional patients. Not a real clinical system.</p>
+  <!--
+    Desktop shell (wide screens only): a backdrop, the wordmark, and one
+    window holding the whole app. Below the breakpoint in css/shell.css all
+    of this falls away and the app fills the screen.
+  -->
+  <div class="backdrop" aria-hidden="true"></div>
 
-  <header class="appbar">
-    <div class="appbar__inner">
-      <div class="brand">
-        <svg class="brand__mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
-          <rect width="28" height="28" rx="7"/>
-          <path d="M5 15h4.5l2.25-5 4 9 2.25-4H23"/>
-        </svg>
-        <span class="brand__name">Steadyhand</span>
-        <span class="brand__divider" aria-hidden="true"></span>
-        <span class="brand__org">Harbor Point General</span>
+  <p class="desk-brand" aria-hidden="true">
+    <svg class="desk-brand__mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false"><rect width="28" height="28" rx="7"/><path d="M5 15h4.5l2.25-5 4 9 2.25-4H23"/></svg>
+    <span class="desk-brand__name">Steadyhand</span>
+    <span class="desk-brand__tag">Shift handoff, a concept</span>
+  </p>
+
+  <div class="desk">
+    <div class="window window--main" id="app-window">
+      <div class="window__titlebar" id="window-handle" aria-hidden="true" title="Drag to move. Double-click to put it back.">
+        <span class="window__lights"><i></i><i></i><i></i></span>
+        <span class="window__title"><svg class="window__icon" viewBox="0 0 28 28" aria-hidden="true" focusable="false"><rect width="28" height="28" rx="7"/><path d="M5 15h4.5l2.25-5 4 9 2.25-4H23"/></svg>Shift Handoff</span>
       </div>
 
-      <div class="appbar__tools">
-        <button type="button" class="search-trigger" id="open-palette" aria-keyshortcuts="/ Control+K">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>
-          <span class="search-trigger__label">Find patient</span>
-          <kbd aria-hidden="true">/</kbd>
-        </button>
-        <p class="sync" id="sync-status" data-state="saved" role="status">
-          <span class="sync__dot" aria-hidden="true"></span><span data-slot>All changes saved</span>
-        </p>
-        <p class="user"><span class="vh">Signed in as </span>S. Rivera, RN</p>
-        <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
-          <span class="icon-btn__label">Night mode</span>
-        </button>
-        <button type="button" class="icon-btn" id="open-shortcuts" aria-keyshortcuts="?" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-keyboard"></use></svg>
-        </button>
-      </div>
-    </div>
-  </header>
+      <div class="window__body" id="window-body">
+          <p class="demo-strip">Concept demo with fictional patients. Not a real clinical system.</p>
 
-  <main class="page">
-    <div class="board-head">
-      <div>
-        <p class="shift-chip">
-          <svg class="icon" aria-hidden="true" focusable="false"><use id="shift-icon" href="#i-sun"></use></svg>
-          <span id="shift-label">Day shift</span>
-          <span class="shift-chip__since" id="shift-since">since 07:00</span>
-        </p>
-        <script>
-          /* Set the shift before first paint, so the label never flashes the wrong one. */
-          (function () {
-            var h = new Date().getHours(), day = h >= 7 && h < 19;
-            document.getElementById("shift-label").textContent = day ? "Day shift" : "Night shift";
-            document.getElementById("shift-since").textContent = day ? "since 07:00" : "since 19:00";
-            document.getElementById("shift-icon").setAttribute("href", day ? "#i-sun" : "#i-moon");
-          })();
-        </script>
-        <h1 class="board-head__title">4 West Med-Surg</h1>
-      </div>
-      <dl class="census is-loading" id="census" aria-label="Unit at a glance">
-        <div class="census__item">
-          <dt>Patients</dt>
-          <dd id="census-patients">0</dd>
-        </div>
-        <div class="census__item census__item--attention">
-          <dt>Need attention</dt>
-          <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg><span id="census-attention">0</span></dd>
-        </div>
-        <div class="census__item">
-          <dt>Open tasks</dt>
-          <dd id="census-open">0</dd>
-        </div>
-        <div class="census__item census__item--overdue">
-          <dt>Overdue</dt>
-          <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg><span id="census-overdue">0</span></dd>
-        </div>
-      </dl>
-    </div>
+          <header class="appbar">
+            <div class="appbar__inner">
+              <div class="brand">
+                <svg class="brand__mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+                  <rect width="28" height="28" rx="7"/>
+                  <path d="M5 15h4.5l2.25-5 4 9 2.25-4H23"/>
+                </svg>
+                <span class="brand__name">Steadyhand</span>
+                <span class="brand__divider" aria-hidden="true"></span>
+                <span class="brand__org">Harbor Point General</span>
+              </div>
 
-    <section class="controls" aria-labelledby="controls-title">
-      <h2 id="controls-title" class="vh">Filter and sort</h2>
-      <form id="filters" class="filters" inert>
-        <fieldset class="filters__group">
-          <legend>Acuity</legend>
-          <div class="chips">
-            <label class="chip"><input type="checkbox" name="acuity" value="3"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>High <span class="chip__count" data-count="acuity-3">0</span></span></label>
-            <label class="chip"><input type="checkbox" name="acuity" value="2"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Medium <span class="chip__count" data-count="acuity-2">0</span></span></label>
-            <label class="chip"><input type="checkbox" name="acuity" value="1"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Low <span class="chip__count" data-count="acuity-1">0</span></span></label>
-          </div>
-        </fieldset>
-
-        <fieldset class="filters__group">
-          <legend>Status</legend>
-          <div class="chips">
-            <label class="chip chip--attention"><input type="checkbox" name="attention"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg><svg class="icon chip__alert" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>Needs attention <span class="chip__count" data-count="attention">0</span></span></label>
-          </div>
-        </fieldset>
-
-        <fieldset class="filters__group">
-          <legend>Tasks</legend>
-          <div class="segmented">
-            <span class="segmented__thumb" aria-hidden="true"></span>
-            <label><input type="radio" name="tasks" value="any" checked><span>Any</span></label>
-            <label><input type="radio" name="tasks" value="open"><span>Open</span></label>
-            <label><input type="radio" name="tasks" value="overdue"><span>Overdue</span></label>
-            <label><input type="radio" name="tasks" value="clear"><span>All done</span></label>
-          </div>
-        </fieldset>
-
-        <div class="filters__group filters__sort">
-          <label for="sort" class="filters__label">Sort by</label>
-          <div class="select">
-            <select id="sort" name="sort">
-              <option value="priority">Priority</option>
-              <option value="room">Room number</option>
-              <option value="tasks">Most open tasks</option>
-              <option value="stale">Longest since update</option>
-            </select>
-          </div>
-        </div>
-      </form>
-    </section>
-
-    <section class="roster" aria-labelledby="roster-title">
-      <div class="roster__bar">
-        <h2 id="roster-title" class="roster__title" tabindex="-1">Patients</h2>
-        <p id="result-count" class="roster__count" role="status">Loading patients</p>
-        <div class="roster__tools">
-          <button type="button" id="clear-filters" class="btn btn--ghost" hidden>Clear filters</button>
-          <fieldset class="density" id="density">
-            <legend class="vh">Row density</legend>
-            <div class="segmented segmented--icons">
-              <span class="segmented__thumb" aria-hidden="true"></span>
-              <label title="Comfortable rows"><input type="radio" name="density" value="comfortable" checked><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-comfortable"></use></svg><span class="segmented__label">Comfortable</span></span></label>
-              <label title="Compact rows (D)"><input type="radio" name="density" value="compact"><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-compact"></use></svg><span class="segmented__label">Compact</span></span></label>
+              <div class="appbar__tools">
+                <button type="button" class="search-trigger" id="open-palette" aria-keyshortcuts="/ Control+K">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>
+                  <span class="search-trigger__label">Find patient</span>
+                  <kbd aria-hidden="true">/</kbd>
+                </button>
+                <p class="sync" id="sync-status" data-state="saved" role="status">
+                  <span class="sync__dot" aria-hidden="true"></span><span data-slot>All changes saved</span>
+                </p>
+                <p class="user"><span class="vh">Signed in as </span>S. Rivera, RN</p>
+                <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
+                  <span class="icon-btn__label">Night mode</span>
+                </button>
+                <button type="button" class="icon-btn" id="open-shortcuts" aria-keyshortcuts="?" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-keyboard"></use></svg>
+                </button>
+              </div>
             </div>
-          </fieldset>
-        </div>
-      </div>
-      <div id="roster"></div>
-    </section>
-  </main>
+          </header>
 
-  <footer class="site-footer">
-    <div class="site-footer__inner">
-      <p class="site-footer__about"><strong>Steadyhand</strong> is a self-directed concept piece by Eder. The hospital, unit, staff and patients are all invented, and nothing here is real software or real clinical guidance. Changes save to this browser only.</p>
-      <section id="demo-controls" class="demo-controls" aria-labelledby="demo-title">
-        <h2 id="demo-title" class="demo-controls__title">Demo controls</h2>
-        <div class="demo-controls__buttons">
-          <button type="button" class="btn btn--secondary btn--small" data-demo="loading">Replay loading</button>
-          <button type="button" class="btn btn--secondary btn--small" data-demo="empty">Show empty unit</button>
-          <button type="button" class="btn btn--secondary btn--small" data-demo="reset">Reset sample data</button>
-        </div>
-      </section>
+          <main class="page">
+            <div class="board-head">
+              <div>
+                <p class="shift-chip">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use id="shift-icon" href="#i-sun"></use></svg>
+                  <span id="shift-label">Day shift</span>
+                  <span class="shift-chip__since" id="shift-since">since 07:00</span>
+                </p>
+                <script>
+                  /* Set the shift before first paint, so the label never flashes the wrong one. */
+                  (function () {
+                    var h = new Date().getHours(), day = h >= 7 && h < 19;
+                    document.getElementById("shift-label").textContent = day ? "Day shift" : "Night shift";
+                    document.getElementById("shift-since").textContent = day ? "since 07:00" : "since 19:00";
+                    document.getElementById("shift-icon").setAttribute("href", day ? "#i-sun" : "#i-moon");
+                  })();
+                </script>
+                <h1 class="board-head__title">4 West Med-Surg</h1>
+              </div>
+              <dl class="census is-loading" id="census" aria-label="Unit at a glance">
+                <div class="census__item">
+                  <dt>Patients</dt>
+                  <dd id="census-patients">0</dd>
+                </div>
+                <div class="census__item census__item--attention">
+                  <dt>Need attention</dt>
+                  <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg><span id="census-attention">0</span></dd>
+                </div>
+                <div class="census__item">
+                  <dt>Open tasks</dt>
+                  <dd id="census-open">0</dd>
+                </div>
+                <div class="census__item census__item--overdue">
+                  <dt>Overdue</dt>
+                  <dd><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg><span id="census-overdue">0</span></dd>
+                </div>
+              </dl>
+            </div>
+
+            <section class="controls" aria-labelledby="controls-title">
+              <h2 id="controls-title" class="vh">Filter and sort</h2>
+              <form id="filters" class="filters" inert>
+                <fieldset class="filters__group">
+                  <legend>Acuity</legend>
+                  <div class="chips">
+                    <label class="chip"><input type="checkbox" name="acuity" value="3"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>High <span class="chip__count" data-count="acuity-3">0</span></span></label>
+                    <label class="chip"><input type="checkbox" name="acuity" value="2"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Medium <span class="chip__count" data-count="acuity-2">0</span></span></label>
+                    <label class="chip"><input type="checkbox" name="acuity" value="1"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>Low <span class="chip__count" data-count="acuity-1">0</span></span></label>
+                  </div>
+                </fieldset>
+
+                <fieldset class="filters__group">
+                  <legend>Status</legend>
+                  <div class="chips">
+                    <label class="chip chip--attention"><input type="checkbox" name="attention"><span class="chip__face"><svg class="icon chip__check" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg><svg class="icon chip__alert" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>Needs attention <span class="chip__count" data-count="attention">0</span></span></label>
+                  </div>
+                </fieldset>
+
+                <fieldset class="filters__group">
+                  <legend>Tasks</legend>
+                  <div class="segmented">
+                    <span class="segmented__thumb" aria-hidden="true"></span>
+                    <label><input type="radio" name="tasks" value="any" checked><span>Any</span></label>
+                    <label><input type="radio" name="tasks" value="open"><span>Open</span></label>
+                    <label><input type="radio" name="tasks" value="overdue"><span>Overdue</span></label>
+                    <label><input type="radio" name="tasks" value="clear"><span>All done</span></label>
+                  </div>
+                </fieldset>
+
+                <div class="filters__group filters__sort">
+                  <label for="sort" class="filters__label">Sort by</label>
+                  <div class="select">
+                    <select id="sort" name="sort">
+                      <option value="priority">Priority</option>
+                      <option value="room">Room number</option>
+                      <option value="tasks">Most open tasks</option>
+                      <option value="stale">Longest since update</option>
+                    </select>
+                  </div>
+                </div>
+              </form>
+            </section>
+
+            <section class="roster" aria-labelledby="roster-title">
+              <div class="roster__bar">
+                <h2 id="roster-title" class="roster__title" tabindex="-1">Patients</h2>
+                <p id="result-count" class="roster__count" role="status">Loading patients</p>
+                <div class="roster__tools">
+                  <button type="button" id="clear-filters" class="btn btn--ghost" hidden>Clear filters</button>
+                  <fieldset class="density" id="density">
+                    <legend class="vh">Row density</legend>
+                    <div class="segmented segmented--icons">
+                      <span class="segmented__thumb" aria-hidden="true"></span>
+                      <label title="Comfortable rows"><input type="radio" name="density" value="comfortable" checked><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-comfortable"></use></svg><span class="segmented__label">Comfortable</span></span></label>
+                      <label title="Compact rows (D)"><input type="radio" name="density" value="compact"><span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-rows-compact"></use></svg><span class="segmented__label">Compact</span></span></label>
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+              <div id="roster"></div>
+            </section>
+          </main>
+
+          <footer class="site-footer">
+            <div class="site-footer__inner">
+              <p class="site-footer__about"><strong>Steadyhand</strong> is a self-directed concept piece by Eder. The hospital, unit, staff and patients are all invented, and nothing here is real software or real clinical guidance. Changes save to this browser only.</p>
+              <section id="demo-controls" class="demo-controls" aria-labelledby="demo-title">
+                <h2 id="demo-title" class="demo-controls__title">Demo controls</h2>
+                <div class="demo-controls__buttons">
+                  <button type="button" class="btn btn--secondary btn--small" data-demo="loading">Replay loading</button>
+                  <button type="button" class="btn btn--secondary btn--small" data-demo="empty">Show empty unit</button>
+                  <button type="button" class="btn btn--secondary btn--small" data-demo="reset">Reset sample data</button>
+                </div>
+              </section>
+            </div>
+          </footer>
+      </div>
     </div>
-  </footer>
+  </div>
 
   <dialog id="palette" class="modal modal--palette" aria-label="Find patient">
     <div class="modal__panel">
