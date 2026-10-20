@@ -9,7 +9,8 @@
 
 .backdrop,
 .desk-brand,
-.window__titlebar { display: none; }
+.window__titlebar,
+.window-ripple { display: none; }
 
 .desk,
 .window--main,
@@ -142,12 +143,28 @@
     transition-duration: var(--dur-fast);
   }
 
-  /* Released: the lift settles on the spring curve, so it overshoots past
-     rest by a hair and lands. With reduced motion --dur-land is 0: instant. */
+  /* Released: js/shell.js plays the plop on transform with keyframes, so
+     CSS only eases the shadow back down onto the desk. */
   .window--main.is-landing {
-    transition:
-      transform var(--dur-land) var(--ease-spring),
-      box-shadow var(--dur-land) var(--ease-settle);
+    transition: box-shadow var(--dur-plop) var(--ease-settle);
+  }
+
+  /* Water ripple on landing: a soft-edged ring, sized to the window and
+     sitting just under it, that grows outward. js/shell.js grows its box by
+     the same distance on every side (not a scale), so the corners stay round
+     and the ring stays thin. The glow inside and out gives it the soft,
+     lit edge of a ring on water rather than a hard UI border. */
+  .window-ripple {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    border: 1.5px solid var(--ripple-color);
+    border-radius: var(--window-radius);
+    box-shadow:
+      0 0 14px 2px var(--ripple-glow),
+      inset 0 0 12px 1px var(--ripple-glow);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .window__titlebar {

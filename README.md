@@ -12,7 +12,7 @@ The longer write-up, with the reasoning behind the decisions, is in [docs/CASE-S
 
 ## What's in it
 
-- **Desktop window.** On wide screens the whole app lives in a floating "Shift Handoff" window on a branded backdrop, tilted slightly at rest. It lies flat while you work in it, because text on a tilted layer renders softer. Drag it by the title bar: it lifts, follows the pointer 1:1 and lands with a small spring. Double-click the title bar to put it back. Below 1360px wide (or 640px tall) the window steps aside and the app fills the screen as usual.
+- **Desktop window.** On wide screens the whole app lives in a floating "Shift Handoff" window on a branded backdrop, tilted slightly at rest. It lies flat while you work in it, because text on a tilted layer renders softer. Drag it by the title bar: it wobbles like jelly as you pick it up, follows the pointer 1:1, and when you let go it plops down and sends a ripple out across the backdrop like a stone dropped in water. Double-click the title bar to put it back. Below 1360px wide (or 640px tall) the window steps aside and the app fills the screen as usual.
 - **Roster board.** One row per patient: room, name, acuity, the two vitals most worth a glance, flags, open task count and last update. Rows reflow into cards on phones.
 - **Filters and sort.** Acuity, "needs attention," task status and four sort orders. The list updates instantly, and rows glide to their new positions instead of snapping.
 - **Density toggle.** Comfortable or compact rows. Compact drops the note preview and shows flags as icons, but never hides "needs attention." It remembers your choice.
@@ -41,7 +41,7 @@ Changes save to `localStorage` in your browser. After 12 hours the demo seeds a 
 - "Find patient" is an ARIA 1.2 combobox: focus stays in the field and the highlighted result is announced through `aria-activedescendant`.
 - Every interactive element has a visible focus state, and every target is at least 44px, including compact rows.
 - Every text and status color pairing passes WCAG AA in both themes.
-- `prefers-reduced-motion` turns every transition, reorder, the check-off animation and the window's lift and landing into instant changes.
+- `prefers-reduced-motion` turns every transition, reorder, the check-off animation and the window's jelly, plop and ripple into instant changes (the ripple doesn't play at all).
 - Dragging the window is pointer-only and entirely optional. The title bar is never a Tab stop and nothing in the app depends on where the window sits. When nothing is focused, Page Down, Space, Home and End scroll the window like a page.
 
 ## Quality checks
@@ -62,7 +62,7 @@ Beyond that I ran scripted checks in headless Chrome:
 - a contrast audit of every visible piece of text against its real rendered background, across 13 states in both themes (0 failures in about 2,800 samples, lowest ratio 5.0:1), plus the wordmark against every backdrop color
 - a Tab walk through the board, drawer and dialogs confirming every focus stop is visible
 - keyboard, focus-return and reduced-motion checks for each interaction
-- the window: 1:1 drag tracking, the landing overshoot, drag limits, touch, resizing, the fallback sizes, and dialogs painting above it
+- the window: 1:1 drag tracking, the jelly and plop shapes, the ripple (behind the window, never blocking clicks, cleaned up after), drag limits, touch, resizing, the fallback sizes, and dialogs painting above it
 
 ## Running it
 

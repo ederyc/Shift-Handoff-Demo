@@ -126,10 +126,17 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --press-scale: 0.97;
   --press-scale-strong: 0.9;
-  /* The one springy curve, kept for one moment: a dragged window landing.
-     It overshoots, so the window dips just past rest and settles. */
+  /* The window's physical moments (js/shell.js). These are the only places
+     motion is allowed to be playful: picking up and putting down.
+     jelly: a damped squash and stretch when grabbed.
+     plop: drop, squash on impact, one rebound, settle.
+     ripple: rings spreading out from under the window on impact.
+     spring: the overshooting curve used to send the window home. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-land: 360ms;
+  --dur-jelly: 420ms;
+  --dur-plop: 460ms;
+  --dur-ripple: 1100ms;
   --lift-scale: 1.012;
 
   /* Desktop shell (css/shell.css). The backdrop mixes the app's own hues into a
@@ -226,6 +233,8 @@
   --backdrop-blob-blue: color-mix(in oklab, var(--color-focus) var(--mix-blob-soft), var(--backdrop-paper));
   --backdrop-blob-green: color-mix(in oklab, var(--color-ok) var(--mix-blob-soft), var(--backdrop-paper));
   --window-edge: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --ripple-color: color-mix(in oklab, var(--color-accent) 75%, transparent);
+  --ripple-glow: color-mix(in oklab, var(--color-accent) 35%, transparent);
   --window-chrome: color-mix(in oklab, var(--color-surface-sunken) 70%, var(--color-surface));
 
   /* Skeletons are ink at low strength, so they sit right in either theme. */
@@ -241,6 +250,9 @@
     --press-scale: 1;
     --press-scale-strong: 1;
     --dur-land: 0ms;
+    --dur-jelly: 0ms;
+    --dur-plop: 0ms;
+    --dur-ripple: 0ms;
     --lift-scale: 1;
   }
 }

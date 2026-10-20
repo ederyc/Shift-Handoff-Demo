@@ -85,9 +85,14 @@
 
   /* ---------- 3. Dragging ----------
     Pointer Events, so mouse, pen and touch share one path. The window
-    tracks the pointer 1:1 (its translate is never transitioned). On release
-    only the lift animates: it settles on the spring curve and overshoots by
-    a hair, which is the "plop". */
+    tracks the pointer 1:1 (its translate is never transitioned), so the
+    physical feel lives in scale alone:
+    - pick up: a jelly wobble (squash wide, stretch tall, settle) into the lift
+    - put down: a plop (drop, squash on impact, one rebound, settle), and at
+      the moment of impact, rings ripple out from under the window like water.
+    Jelly, not a shake: a side-to-side shake is the usual "that was wrong"
+    signal, which is the wrong message for picking something up.
+    With reduced motion none of it plays; the window just moves. */
 
   const KEEP_VISIBLE = 160; // px of title bar that always stays on screen to grab again
   const EDGE = 16; // the tilt at rest pushes the near edges out a few px; this absorbs it
@@ -118,11 +123,85 @@
     win.style.translate = `${offset.x}px ${offset.y}px`;
   }
 
+  const lift = () => parseFloat(SH.motion.token("--lift-scale")) || 1;
+  let bodyAnim = null; // the jelly or plop currently playing on the window
+
+  function playOnWindow(frames, durToken) {
+    bodyAnim?.cancel();
+    bodyAnim = SH.motion.reduced() ? null : win.animate(frames, { duration: SH.motion.ms(durToken) });
+  }
+
+  /* Damped squash and stretch, ending exactly on the lifted scale that CSS holds while dragging. */
+  function jelly() {
+    const l = lift();
+    playOnWindow([
+      { transform: "scale(1, 1)", easing: "ease-out" },
+      { transform: `scale(${l * 1.018}, ${l * 0.984})`, offset: 0.26, easing: "ease-in-out" },
+      { transform: `scale(${l * 0.992}, ${l * 1.01})`, offset: 0.52, easing: "ease-in-out" },
+      { transform: `scale(${l * 1.004}, ${l * 0.997})`, offset: 0.78, easing: "ease-in-out" },
+      { transform: `scale(${l}, ${l})` },
+    ], "--dur-jelly");
+  }
+
+  /* Drop (accelerating), squash on impact, rebound, settle at rest. */
+  const IMPACT = 0.32; // fraction of the plop where it hits the desk
+  function plop() {
+    const l = lift();
+    playOnWindow([
+      { transform: `scale(${l}, ${l})`, easing: "cubic-bezier(0.5, 0, 0.9, 0.5)" },
+      { transform: "scale(1.012, 0.984)", offset: IMPACT, easing: "ease-out" },
+      { transform: "scale(0.995, 1.006)", offset: 0.6, easing: "ease-in-out" },
+      { transform: "scale(1.002, 0.999)", offset: 0.82, easing: "ease-in-out" },
+      { transform: "scale(1, 1)" },
+    ], "--dur-plop");
+    ripple(SH.motion.ms("--dur-plop") * IMPACT);
+  }
+
+  /* Rings spreading out from under the window: [start delay, reach px, opacity, duration share]. */
+  const RINGS = [
+    [0, 70, 0.9, 0.8],
+    [140, 116, 0.6, 0.95],
+    [280, 160, 0.35, 1.1],
+  ];
+
+  function ripple(delay = 0) {
+    if (SH.motion.reduced()) return;
+    const x = win.offsetLeft + offset.x;
+    const y = win.offsetTop + offset.y;
+    const w = win.offsetWidth;
+    const h = win.offsetHeight;
+    const radius = parseFloat(getComputedStyle(win).borderTopLeftRadius) || 0;
+    const box = (grow) => ({
+      left: `${x - grow}px`,
+      top: `${y - grow}px`,
+      width: `${w + grow * 2}px`,
+      height: `${h + grow * 2}px`,
+      borderRadius: `${radius + grow}px`,
+    });
+    const dur = SH.motion.ms("--dur-ripple");
+    for (const [stagger, reach, alpha, share] of RINGS) {
+      const ring = document.createElement("span");
+      ring.className = "window-ripple";
+      ring.setAttribute("aria-hidden", "true");
+      Object.assign(ring.style, box(0));
+      win.before(ring); // under the window, on the backdrop
+      const anim = ring.animate(
+        [
+          { ...box(0), opacity: alpha },
+          { ...box(reach), opacity: 0 },
+        ],
+        { duration: dur * share, delay: delay + stagger, easing: SH.motion.token("--ease-settle"), fill: "both" }
+      );
+      anim.onfinish = anim.oncancel = () => ring.remove();
+    }
+  }
+
   function land() {
     win.classList.remove("is-dragging");
     win.classList.add("is-landing");
+    plop();
     clearTimeout(landTimer);
-    landTimer = setTimeout(() => win.classList.remove("is-landing"), SH.motion.ms("--dur-land") + 50);
+    landTimer = setTimeout(() => win.classList.remove("is-landing"), SH.motion.ms("--dur-plop") + 50);
   }
 
   handle.addEventListener("pointerdown", (e) => {
@@ -134,6 +213,7 @@
     win.classList.remove("is-landing");
     win.classList.add("is-dragging");
     setEngaged(true);
+    jelly();
   });
 
   handle.addEventListener("pointermove", (e) => {
@@ -149,17 +229,21 @@
   handle.addEventListener("pointercancel", endDrag);
   handle.addEventListener("lostpointercapture", endDrag);
 
-  /* Double-click the title bar to send the window home, on the same spring. */
+  /* Double-click the title bar to send the window home on the spring curve,
+     with a ripple when it arrives. */
   handle.addEventListener("dblclick", () => {
     if (!windowed() || (offset.x === 0 && offset.y === 0)) return;
     const from = `${offset.x}px ${offset.y}px`;
     moveTo(0, 0);
     SH.motion.animate(win, [{ translate: from }, { translate: "0px 0px" }], { dur: "--dur-land", ease: "--ease-spring" });
+    ripple(SH.motion.ms("--dur-land") * 0.55);
   });
 
-  /* A smaller viewport could strand the title bar: pull it back in bounds. */
+  /* A smaller viewport could strand the title bar: pull it back in bounds.
+     If the window steps aside entirely, any ripple still spreading goes too. */
   addEventListener("resize", () => {
     if (windowed()) moveTo(offset.x, offset.y);
+    else document.querySelectorAll(".window-ripple").forEach((r) => r.getAnimations().forEach((a) => a.cancel()));
   });
 
   SH.shell = { windowed, isEngaged: () => engaged, offset: () => ({ ...offset }) };
