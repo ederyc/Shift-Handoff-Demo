@@ -4,9 +4,9 @@
 
 **Live demo: https://ederyc.github.io/Shift-Handoff-Demo/**
 
-![The Steadyhand roster board for a fictional unit, 4 West Med-Surg, sorted by room](images/board.png)
+![Steadyhand in its desktop window on a soft teal backdrop, sorted by room](images/board.png)
 
-*Sorted by room here, the way you'd walk the floor. The default sort puts the five patients who need attention at the top.*
+*The window at rest, sorted by room, the way you'd walk the floor. The default sort puts the five patients who need attention at the top.*
 
 ## The problem
 
@@ -38,7 +38,7 @@ Each question became a column or a signal, and the order of the questions set th
 - **The board answers questions 1 through 5. The drawer holds everything else.** If a piece of information doesn't help you decide where to walk next, it belongs in the drawer.
 - **No navigation away from the board.** The drawer opens over it, and the board keeps updating behind it.
 
-I built it in passes after that: a working v1, then an interaction pass, a visual depth pass, a feature pass and a final quality pass. Each pass had to keep everything the earlier ones got right.
+I built it in passes after that: a working v1, then an interaction pass, a visual depth pass, a feature pass, a quality pass, and finally a desktop window to house it all. Each pass had to keep everything the earlier ones got right.
 
 ## Key screens and decisions
 
@@ -120,24 +120,40 @@ That curve then became the system. The check-off's easing is the `--ease-settle`
 
 ### The visual system
 
-![Night mode with the drawer open](images/night.png)
+![Night mode: the same window on a deeper, moodier backdrop](images/night.png)
 
 - **One label voice.** Table headers, filter legends and drawer sections all share a small uppercase overline style, so labels never compete with data.
 - **Status colors come from a recipe.** Each status has one hand-picked hue per theme. Its tints, soft fills and borders are mixed from that hue with `color-mix()`, the same way in both themes, so night mode can't drift from day mode. Night mode exists because units run around the clock.
 - **One icon set:** a single grid, round caps and two sizes, with non-scaling strokes so the line weight is identical at both sizes.
 
-![Mobile: rows reflow into cards](images/mobile.png)
+### The desktop window
+
+![The window mid-drag: lifted slightly, with a deeper shadow](images/drag.png)
+
+The last pass re-housed the app in a floating window on a branded backdrop, closer to a desktop app than a webpage. The composition borrows from product marketing shots: a logo on the backdrop, one window tilted toward you, a soft shadow. Every color comes from the existing tokens. The backdrop's color fields are the app's own teal, blue and green mixed into white by day and near-black by night, and alert red is left out, because red still means one thing.
+
+- **Tilted at rest, flat at work.** I tested the tilt before committing to it, and text on a tilted layer renders visibly softer. For a dense clinical board that settles it: the window tilts while nobody's using it and lies flat the moment the pointer comes near or keyboard focus goes inside. Nothing moves more than 8px when it flattens, and it starts flattening 40px before the pointer arrives, so a click never lands on the wrong row. It only tilts back once the pointer is clearly away, so it doesn't flicker at the edge.
+- **The shadow agrees with the tilt.** The right and bottom edges lean toward you, so the shadow falls down and to the right. Tests measure both, because a shadow on the wrong side breaks the 3D illusion instantly.
+- **Dragging is a flourish, not a requirement.** The title bar is the handle. The window follows the pointer 1:1, lifts a little with a deeper shadow while held, and on release the lift settles on a spring curve that dips just past rest before landing. The position itself never bounces, so the window stays exactly where you put it. At least 160px of title bar always stays on screen, and double-clicking it puts the window back. The title bar is never a Tab stop, and the app works the same whether anyone drags it or not. With reduced motion, the lift and landing are instant.
+- **The breakpoint was measured, not picked.** The board's desktop layout needs a window about 1,260px wide before anything wraps. At 1,200px the appbar, sort control and patient names all broke. With the margins that means a 1,360px viewport, so common 1,366px laptops get the window and anything narrower gets the plain app. Short screens skip it too, since a title bar and margins on a 600px-tall screen would eat a third of the board.
+- **The fallback is the old app, not a squashed window.** Below the breakpoint the wrapper elements step out of layout entirely (`display: contents`), so phones and small laptops get exactly the layout they had before.
+
+![On phones the window steps aside and rows reflow into cards](images/mobile.png)
 
 ## Quality checks
 
 These are measurements I took, not claims about real-world performance:
 
-- **Lighthouse** (local static server, simulated throttling): mobile 95 performance, 100 accessibility, 100 best practices, 100 SEO; desktop 100 across the board. The weak spot is mobile total blocking time, at 110 to 210ms.
+- **Lighthouse** (local static server, simulated throttling): mobile 96 performance, 100 accessibility, 100 best practices, 100 SEO; desktop 100 across the board, both at the standard 1350px preset and at 1440px with the tilted window rendering. Lighthouse's desktop preset is just under the window's breakpoint, so without that extra run it would never have tested the window. The weak spot is mobile total blocking time, at 140 to 170ms.
 - Two fixes came straight out of Lighthouse:
   - **Self-hosting the font.** The page was waiting on a third-party font server before it could paint. Self-hosting it took mobile first paint from 2.7s to 1.4s.
   - **A layout shift I'd never seen.** The empty roster let the footer paint on screen for a moment, then the loading skeleton shoved it away. Reserving the space up front took layout shift to 0.
 - **Contrast,** measured on the rendered page rather than on token pairs: about 2,800 text samples across 13 states in both themes, none below AA, lowest 5.0:1.
 - **Keyboard:** a scripted Tab walk through the board, drawer and dialogs checks that every focus stop is visible. That walk caught a real bug: the drawer's focus trap was counting SVG icon elements as focusable, so Tab could escape it.
+- **The window's motion,** timed frame by frame, since Lighthouse only measures loading. Dragging and the tilt hold a median of 16.7ms per frame with the slowest 5% around 17ms, and scrolling inside the window is no slower than scrolling the plain page. Getting there took two fixes:
+  - **The drag position lived in a CSS custom property.** Custom properties inherit, so every pointer move restyled the entire app inside the window. Setting `translate` directly touches only the window.
+  - **The flat window wasn't on its own compositor layer,** so every drag frame repainted it. Promoting it turned each frame into a cheap move.
+- **The tilt broke two things,** both caught by tests. On-screen rectangles are perspective-distorted on a tilted element, so the sliding pill on the segmented controls landed off target, and the row reorder animation measured slightly wrong. Both now measure in layout space, which ignores the tilt.
 
 ## What I'd test if this were real
 
@@ -149,6 +165,7 @@ I didn't test any of this with people. If I were to, these are the questions I'd
 4. **What does compact mode give up that people miss?** I guessed the note preview was the least important line. I'd want to see whether people turn compact on and then keep opening drawers to read notes.
 5. **Does the check-off moment hold up on the fortieth task of a shift?** Delight that wears thin by hour ten is just noise.
 6. **Accessibility with real assistive tech users,** not just automated checks and my own screen reader passes, especially the table to card reflow, the roving list and the combobox.
+7. **Does the window earn its place?** It makes a strong first impression, but I'd want to know whether people drag it at all, and whether the tilt settling back when the pointer leaves feels alive or distracting over a long shift.
 
 ## What I'd change with more time
 
@@ -157,5 +174,6 @@ I didn't test any of this with people. If I were to, these are the questions I'd
 - **Let time move the board.** Relative timestamps refresh every 30 seconds, but a task that crosses its due time only shows as overdue at the next re-render. A real board should flag it the moment it happens.
 - **Bring the test scripts into the repo.** The Lighthouse runs, contrast audit and keyboard walks live in my scratch folder because they need a headless browser package, and I wanted the repo free of dependencies. With more time I'd add them as an optional dev setup with CI.
 - **Chase down mobile blocking time.** Most of it is the browser's first layout of the table on a slowed CPU. I'd look at rendering fewer nodes up front.
+- **Let the window resize.** It's a fixed size relative to the screen. Dragging a corner to resize it would complete the desktop metaphor, but the app would then need container queries so it reflows to the window rather than the screen.
 - **Small honest gaps:** the shortcuts sheet says "Ctrl" even though Cmd works on a Mac, compact flag names rely on a hover tooltip that touch screens can't use, and opening the file straight from disk falls back to the system font.
 - **And the ideas I'd explore next:** a "since you last looked" marker for rows that changed while you were away, and a print view, since a lot of handoff still happens on paper.

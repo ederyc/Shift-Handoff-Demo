@@ -111,8 +111,11 @@
   function moveTo(x, y) {
     const b = bounds();
     offset = { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) };
-    win.style.setProperty("--drag-x", `${offset.x}px`);
-    win.style.setProperty("--drag-y", `${offset.y}px`);
+    // Set translate directly, not through a custom property: custom properties
+    // inherit, so changing one restyles the entire app inside the window on
+    // every pointer move. translate touches only the window, and below the
+    // breakpoint the window has no box (display: contents), so it's ignored.
+    win.style.translate = `${offset.x}px ${offset.y}px`;
   }
 
   function land() {

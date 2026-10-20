@@ -112,14 +112,17 @@
 
   .window--main {
     z-index: 2;
-    /* Drag offset, set by js/shell.js. A separate property from transform,
-       so moving the window never fights the tilt or the lift. */
-    translate: var(--drag-x, 0px) var(--drag-y, 0px);
+    /* The drag offset is set inline as translate by js/shell.js: a separate
+       property from transform, so moving never fights the tilt or the lift. */
     background: var(--color-canvas);
     box-shadow: var(--shadow-window);
     transition:
       transform var(--dur-slow) var(--ease-settle),
       box-shadow var(--dur-slow) var(--ease-settle);
+    /* Its own compositor layer, so a drag frame is a cheap move, not a
+       repaint of the whole app. (Measured: without it, every pointer move
+       repainted and re-layerized the window.) */
+    will-change: transform, translate;
   }
 
   /*
