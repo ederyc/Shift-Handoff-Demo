@@ -121,6 +121,24 @@
     // every pointer move. translate touches only the window, and below the
     // breakpoint the window has no box (display: contents), so it's ignored.
     win.style.translate = `${offset.x}px ${offset.y}px`;
+    updateCovered();
+  }
+
+  /* The wordmark gets a frosted backing only while the window is under it.
+     Computed from the window's layout box plus the drag offset (no measuring
+     the moving window), with a little slack for the tilt and lift. */
+  const brand = document.querySelector(".desk-brand");
+  let brandBox = null;
+  function updateCovered() {
+    if (!windowed()) return brand.classList.remove("is-covered");
+    brandBox = brandBox || brand.getBoundingClientRect();
+    const slack = 12;
+    const left = win.offsetLeft + offset.x - slack;
+    const top = win.offsetTop + offset.y - slack;
+    const covered =
+      left < brandBox.right && left + win.offsetWidth + slack * 2 > brandBox.left &&
+      top < brandBox.bottom && top + win.offsetHeight + slack * 2 > brandBox.top;
+    brand.classList.toggle("is-covered", covered);
   }
 
   const lift = () => parseFloat(SH.motion.token("--lift-scale")) || 1;
@@ -242,9 +260,12 @@
   /* A smaller viewport could strand the title bar: pull it back in bounds.
      If the window steps aside entirely, any ripple still spreading goes too. */
   addEventListener("resize", () => {
+    brandBox = null;
     if (windowed()) moveTo(offset.x, offset.y);
     else document.querySelectorAll(".window-ripple").forEach((r) => r.getAnimations().forEach((a) => a.cancel()));
+    updateCovered();
   });
+  updateCovered();
 
   SH.shell = { windowed, isEngaged: () => engaged, offset: () => ({ ...offset }) };
 })();

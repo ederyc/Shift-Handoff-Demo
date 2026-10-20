@@ -234,6 +234,8 @@
   --backdrop-blob-green: color-mix(in oklab, var(--color-ok) var(--mix-blob-soft), var(--backdrop-paper));
   --window-edge: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --ripple-color: color-mix(in oklab, var(--color-accent) 75%, transparent);
+  /* Frosted glass for the desk chrome (wordmark backing, night mode button). */
+  --desk-glass: color-mix(in oklab, var(--color-surface) 78%, transparent);
   --ripple-glow: color-mix(in oklab, var(--color-accent) 35%, transparent);
   --window-chrome: color-mix(in oklab, var(--color-surface-sunken) 70%, var(--color-surface));
 

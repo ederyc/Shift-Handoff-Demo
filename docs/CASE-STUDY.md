@@ -142,7 +142,8 @@ The last pass re-housed the app in a floating window on a branded backdrop, clos
 
 ![The window just after landing, with ripple rings spreading out across the backdrop](images/ripple.png)
 - **The breakpoint was measured, not picked.** The board's desktop layout needs a window about 1,260px wide before anything wraps. At 1,200px the appbar, sort control and patient names all broke. With the margins that means a 1,360px viewport, so common 1,366px laptops get the window and anything narrower gets the plain app. Short screens skip it too, since a title bar and margins on a 600px-tall screen would eat a third of the board.
-- **The fallback is the old app, not a squashed window.** Below the breakpoint the wrapper elements step out of layout entirely (`display: contents`), so phones and small laptops get exactly the layout they had before.
+- **The desk has its own small layer of chrome.** The wordmark sits top left and night mode becomes a sun/moon button top right, both above the window, so a dragged window slides underneath them. Bare type on the backdrop is fine until the window's own text slides under it, so the wordmark gets a frosted backing only while it's covered; at rest it stays bare. Clicks pass straight through the wordmark, so a title bar parked beneath it can still be grabbed. I checked the covered contrast against the darkest and lightest content that could sit underneath: 10.4:1 by day and 7.5:1 at night, in the worst case.
+- **The fallback is the old app, not a squashed window.** Below the breakpoint the wrapper elements step out of layout entirely (`display: contents`), so phones and small laptops get exactly the layout they had before, including the night mode button back in the app's header.
 
 ![On phones the window steps aside and rows reflow into cards](images/mobile.png)
 

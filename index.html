@@ -55,6 +55,11 @@
     <span class="desk-brand__tag">Shift handoff, a concept</span>
   </p>
 
+  <!-- Desk-level night mode: replaces the in-app toggle while the window is shown. -->
+  <button type="button" class="desk-theme" data-theme-toggle aria-pressed="false" aria-label="Night mode" title="Night mode">
+    <svg class="icon icon--md" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
+  </button>
+
   <div class="desk">
     <div class="window window--main" id="app-window">
       <div class="window__titlebar" id="window-handle" aria-hidden="true" title="Drag to move. Double-click to put it back.">
@@ -87,7 +92,7 @@
                   <span class="sync__dot" aria-hidden="true"></span><span data-slot>All changes saved</span>
                 </p>
                 <p class="user"><span class="vh">Signed in as </span>S. Rivera, RN</p>
-                <button type="button" class="icon-btn" id="theme-toggle" aria-pressed="false">
+                <button type="button" class="icon-btn" id="theme-toggle" data-theme-toggle aria-pressed="false">
                   <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-moon"></use></svg>
                   <span class="icon-btn__label">Night mode</span>
                 </button>

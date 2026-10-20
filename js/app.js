@@ -294,20 +294,26 @@
 
   /* ---------- Theme ---------- */
 
+  /* Two toggles share one setting: the in-app button (plain layout) and the
+     icon-only desk button (window layout). Only one is ever visible. */
   function initTheme() {
-    const btn = $("#theme-toggle");
+    const buttons = [...document.querySelectorAll("[data-theme-toggle]")];
     const sync = () => {
       const dark = document.documentElement.dataset.theme === "dark";
-      btn.setAttribute("aria-pressed", String(dark));
-      btn.querySelector("use").setAttribute("href", dark ? "#i-sun" : "#i-moon");
+      buttons.forEach((btn) => {
+        btn.setAttribute("aria-pressed", String(dark));
+        btn.querySelector("use").setAttribute("href", dark ? "#i-sun" : "#i-moon");
+      });
     };
-    btn.addEventListener("click", () => {
-      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-      document.documentElement.dataset.theme = next;
-      storage.set("steadyhand:theme", next);
-      sync();
-      SH.motion.animate(btn.querySelector("svg"), [{ transform: "rotate(-90deg) scale(0.6)", opacity: 0 }, { transform: "none", opacity: 1 }]);
-    });
+    buttons.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        storage.set("steadyhand:theme", next);
+        sync();
+        SH.motion.animate(btn.querySelector("svg"), [{ transform: "rotate(-90deg) scale(0.6)", opacity: 0 }, { transform: "none", opacity: 1 }]);
+      })
+    );
     sync();
   }
 

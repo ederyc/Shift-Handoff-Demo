@@ -9,6 +9,7 @@
 
 .backdrop,
 .desk-brand,
+.desk-theme,
 .window__titlebar,
 .window-ripple { display: none; }
 
@@ -51,16 +52,66 @@
       linear-gradient(160deg, var(--backdrop-base) 0%, var(--backdrop-base-end) 100%);
   }
 
-  /* Wordmark: sits on the backdrop, not in the window. */
+  /*
+    Desk chrome (wordmark top-left, night mode top-right) sits on the layer
+    above the window, so a dragged window slides underneath it.
+  */
+  .desk-brand,
+  .desk-theme { z-index: 3; }
+
+  /* Wordmark: on the backdrop it's bare type. When the window slides under
+     it, js/shell.js adds .is-covered and a frosted backing fades in, so it
+     stays readable over the app instead of colliding with the app's own text.
+     The padding is always there, so nothing shifts when the backing appears.
+     Clicks pass straight through, so a title bar under it can still be grabbed. */
   .desk-brand {
     position: fixed;
-    top: 1.75rem;
-    left: var(--desk-pad-x);
+    top: calc(1.75rem - 6px);
+    left: calc(var(--desk-pad-x) - 8px);
     display: flex;
     align-items: center;
     gap: var(--space-3);
     margin: 0;
+    padding: 6px 16px 6px 8px;
+    border-radius: var(--radius-pill);
+    pointer-events: none;
+    transition:
+      background-color var(--dur-base) var(--ease-standard),
+      box-shadow var(--dur-base) var(--ease-standard),
+      backdrop-filter var(--dur-base) var(--ease-standard);
   }
+  .desk-brand.is-covered {
+    background: var(--desk-glass);
+    backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: 0 0 0 1px var(--window-edge), 0 8px 24px -10px rgb(12 42 52 / 0.3);
+  }
+
+  /* Night mode, top right: icon only, in the same glass as the covered wordmark. */
+  .desk-theme {
+    position: fixed;
+    top: calc(1.75rem - 4px);
+    right: var(--desk-pad-x);
+    display: grid;
+    place-items: center;
+    width: var(--tap);
+    height: var(--tap);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--desk-glass);
+    backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: 0 0 0 1px var(--window-edge), 0 6px 18px -10px rgb(12 42 52 / 0.3);
+    color: var(--color-ink);
+    transition:
+      background-color var(--dur-fast) var(--ease-standard),
+      transform var(--dur-fast) var(--ease-settle);
+  }
+  .desk-theme:hover { background: var(--color-surface); }
+  .desk-theme:active { transform: scale(var(--press-scale)); }
+  .desk-theme:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; border-radius: 50%; }
+
+  /* The in-app toggle steps aside while the desk one is showing. */
+  #theme-toggle { display: none; }
   .desk-brand__mark { width: 2.25rem; height: 2.25rem; }
   .desk-brand__mark rect { fill: var(--color-accent); }
   .desk-brand__mark path {
